@@ -1,0 +1,55 @@
+{
+  "Framework": "jasmine",
+  "TestHarnessLocationMode": "SettingsFileAdjacent",
+  "Compile": { "Mode": "External" },
+  "References": [
+    {
+      "Path": "src/dcore-1.0.0.js"
+    },
+    {
+      "Path": "src/routing/UrlHash.js"
+    },
+    {
+      "Path": "src/routing/Route.js"
+    },
+    {
+      "Path": "src/routing/RouteConfig.js"
+    },
+    {
+      "Path": "src/routing/install.js"
+    },
+    {
+      "Path": "src/mvp/Model.js"
+    },
+    {
+      "Path": "src/mvp/HashSet.js"
+    },
+    {
+      "Path": "src/mvp/Collection.js"
+    },
+    {
+      "Path": "src/mvp/lib/UIEvent.js"
+    },
+    {
+      "Path": "src/mvp/View.js"
+    },
+    {
+      "Path": "src/mvp/Presenter.js"
+    },
+    {
+      "Path": "src/mvp/install.js"
+    },
+    {
+      "Path": "src/services/ServiceConfig.js"
+    },
+    {
+      "Path": "src/services/install.js"
+    }
+  ],
+  "Tests": [
+    {
+      "Path": "tests",
+      "Includes": [ "*.js" ]
+    }
+  ]
+}
