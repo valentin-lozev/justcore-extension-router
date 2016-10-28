@@ -586,6 +586,7 @@ var dcore;
             View: mvp.View,
             Presenter: mvp.Presenter,
         };
+        that.Sandbox.prototype.asMVPModel = mvp.asModel;
     };
 })(dcore || (dcore = {}));
 //# sourceMappingURL=install.js.map
