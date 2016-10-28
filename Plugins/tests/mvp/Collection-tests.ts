@@ -21,8 +21,8 @@ describe("Collection", () => {
         return result;
     }
 
-    function getCollection(): MVPCollection<Book> {
-        return new core.mvp.Collection<Book>();
+    function getCollection(booksCount: number = 0): MVPCollection<Book> {
+        return new core.mvp.Collection<Book>(getBooks(booksCount));
     }
 
     it("should be an instance of Model", () => {
@@ -76,13 +76,21 @@ describe("Collection", () => {
             expect(spy.handler).toHaveBeenCalledWith(books);
             expect(spy.handler).toHaveBeenCalledTimes(1);
         });
+
+        it("should returns an array of its items", () => {
+            let collection = getCollection(10);
+
+            let books = collection.toArray();
+
+            expect(books.length).toEqual(10);
+            books.forEach(b => expect(collection.contains(b)).toBeTruthy());
+        });
     });
 
     describe("Deleting", () => {
         it("should remove an existing item", () => {
-            let collection = getCollection();
-            let book = new Book();
-            collection.add(book);
+            let collection = getCollection(1);
+            let book = collection.toArray()[0];
 
             collection.remove(book);
 
@@ -90,11 +98,10 @@ describe("Collection", () => {
         });
 
         it("should notify when delete an item", () => {
-            let collection = getCollection();
-            let book = new Book();
+            let collection = getCollection(1);
+            let book = collection.toArray()[0];
             let spy = jasmine.createSpyObj("spy", ["handler"]);
             collection.on(core.mvp.CollectionEvents.DeletedItems, spy.handler);
-            collection.add(book);
 
             collection.remove(book);
 
@@ -103,9 +110,8 @@ describe("Collection", () => {
         });
 
         it("should remove a range of items", () => {
-            let collection = getCollection();
-            let books = getBooks(10);
-            collection.addRange(books);
+            let collection = getCollection(10);
+            let books = collection.toArray();
 
             collection.removeRange(books);
 
@@ -113,11 +119,10 @@ describe("Collection", () => {
         });
 
         it("should notify when delete items", () => {
-            let collection = getCollection();
-            let books = getBooks(20);
+            let collection = getCollection(10);
+            let books = collection.toArray();
             let spy = jasmine.createSpyObj("spy", ["handler"]);
             collection.on(core.mvp.CollectionEvents.DeletedItems, spy.handler);
-            collection.addRange(books);
 
             collection.removeRange(books);
 
@@ -126,11 +131,10 @@ describe("Collection", () => {
         });
 
         it("should detach an item when it was deleted", () => {
-            let collection = getCollection();
-            let book = new Book();
+            let collection = getCollection(1);
+            let book = collection.toArray()[0];
             let spy = jasmine.createSpyObj("spy", ["handler"]);
             collection.on(core.mvp.CollectionEvents.UpdatedItem, spy.handler);
-            collection.add(book);
             collection.remove(book);
 
             book.change();
@@ -139,11 +143,9 @@ describe("Collection", () => {
         });
 
         it("should remove all items when clear is being invoked", () => {
-            let collection = getCollection();
-            let books = getBooks(20);
+            let collection = getCollection(20);
             let spy = jasmine.createSpyObj("spy", ["handler"]);
             collection.on(core.mvp.CollectionEvents.DeletedItems, spy.handler);
-            collection.addRange(books);
 
             collection.clear();
 
@@ -152,11 +154,10 @@ describe("Collection", () => {
         });
 
         it("should delete an item on item destroy", () => {
-            let collection = getCollection();
-            let books = getBooks(20);
+            let collection = getCollection(20);
+            let books = collection.toArray();
             let spy = jasmine.createSpyObj("spy", ["handler"]);
             collection.on(core.mvp.CollectionEvents.DeletedItems, spy.handler);
-            collection.addRange(books);
 
             books.forEach(book => {
                 let size = collection.size;
@@ -172,17 +173,15 @@ describe("Collection", () => {
 
     describe("Updating", () => {
         it("should notify when item was updated", () => {
-            let collection = getCollection();
-            let books = getBooks(20);
+            let collection = getCollection(10);
+            let books = collection.toArray();
             let spy = jasmine.createSpyObj("spy", ["handler"]);
             collection.on(core.mvp.CollectionEvents.UpdatedItem, spy.handler);
-            collection.addRange(books);
 
             books.forEach(book => {
                 book.change();
                 expect(spy.handler).toHaveBeenCalledWith(book);
             });
-
             expect(spy.handler).toHaveBeenCalledTimes(books.length);
         });
     });
@@ -195,9 +194,8 @@ describe("Collection", () => {
     });
 
     it("should return true when constains a given item", () => {
-        let collection = getCollection();
-        let book = new Book();
-        collection.add(book);
+        let collection = getCollection(1);
+        let book = collection.toArray()[0];
 
         expect(collection.contains(book)).toBeTruthy();
     });
@@ -209,9 +207,7 @@ describe("Collection", () => {
     });
 
     it("any should return true when constains at least one item", () => {
-        let collection = getCollection();
-        let book = new Book();
-        collection.add(book);
+        let collection = getCollection(1);
 
         expect(collection.any()).toBeTruthy();
     });

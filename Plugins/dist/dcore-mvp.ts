@@ -141,14 +141,17 @@ namespace dcore.plugins.mvp {
      *  @augments dcore.Model
      */
     export class Collection<TModel extends MVPModel> extends Model implements MVPCollection<TModel> {
-        private models: TModel[] = [];
+        private modelList: TModel[] = [];
 
-        constructor() {
+        constructor(models?: TModel[]) {
             super();
+            if (Array.isArray(models)) {
+                this.addRange(models);
+            }
         }
 
         get size(): number {
-            return this.models.length;
+            return this.modelList.length;
         }
 
         /**
@@ -173,7 +176,7 @@ namespace dcore.plugins.mvp {
             models.forEach(m => {
                 m.on(ModelEvents.Change, onItemChange, this);
                 m.on(ModelEvents.Destroy, onItemDestroy, this);
-                this.models.push(m);
+                this.modelList.push(m);
             });
 
             this.notify(CollectionEvents.AddedItems, models);
@@ -199,15 +202,15 @@ namespace dcore.plugins.mvp {
             let deleted = [];
             for (let i = 0, len = models.length; i < len; i++) {
                 let model = models[i];
-                let atIndex = this.models.indexOf(model);
+                let atIndex = this.modelList.indexOf(model);
                 if (atIndex < 0) {
                     continue;
                 }
 
                 model.off(ModelEvents.Change, onItemChange, this);
                 model.off(ModelEvents.Destroy, onItemDestroy, this);
-                this.models[atIndex] = this.models[this.size - 1];
-                this.models.length--;
+                this.modelList[atIndex] = this.modelList[this.size - 1];
+                this.modelList.length--;
                 deleted.push(model);
             }
 
@@ -230,7 +233,7 @@ namespace dcore.plugins.mvp {
          *  @returns {Boolean}
          */
         contains(model: TModel): boolean {
-            return this.models.indexOf(model) >= 0;
+            return this.modelList.indexOf(model) >= 0;
         }
 
         /**
@@ -246,14 +249,14 @@ namespace dcore.plugins.mvp {
          *  @returns {Array}
          */
         toArray(): TModel[] {
-            return this.models.slice(0);
+            return this.modelList.slice(0);
         }
 
         /**
          *  Performs an action on each model in the list.
          */
         forEach(action: (item: TModel, index: number, array: TModel[]) => void, context: any): void {
-            this.models.forEach(action, context);
+            this.modelList.forEach(action, context);
         }
     }
 }

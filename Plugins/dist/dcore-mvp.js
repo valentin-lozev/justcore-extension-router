@@ -126,13 +126,16 @@ var dcore;
              */
             var Collection = (function (_super) {
                 __extends(Collection, _super);
-                function Collection() {
+                function Collection(models) {
                     _super.call(this);
-                    this.models = [];
+                    this.modelList = [];
+                    if (Array.isArray(models)) {
+                        this.addRange(models);
+                    }
                 }
                 Object.defineProperty(Collection.prototype, "size", {
                     get: function () {
-                        return this.models.length;
+                        return this.modelList.length;
                     },
                     enumerable: true,
                     configurable: true
@@ -158,7 +161,7 @@ var dcore;
                     models.forEach(function (m) {
                         m.on(mvp.ModelEvents.Change, onItemChange, _this);
                         m.on(mvp.ModelEvents.Destroy, onItemDestroy, _this);
-                        _this.models.push(m);
+                        _this.modelList.push(m);
                     });
                     this.notify(mvp.CollectionEvents.AddedItems, models);
                 };
@@ -180,14 +183,14 @@ var dcore;
                     var deleted = [];
                     for (var i = 0, len = models.length; i < len; i++) {
                         var model = models[i];
-                        var atIndex = this.models.indexOf(model);
+                        var atIndex = this.modelList.indexOf(model);
                         if (atIndex < 0) {
                             continue;
                         }
                         model.off(mvp.ModelEvents.Change, onItemChange, this);
                         model.off(mvp.ModelEvents.Destroy, onItemDestroy, this);
-                        this.models[atIndex] = this.models[this.size - 1];
-                        this.models.length--;
+                        this.modelList[atIndex] = this.modelList[this.size - 1];
+                        this.modelList.length--;
                         deleted.push(model);
                     }
                     var isModified = deleted.length > 0;
@@ -207,7 +210,7 @@ var dcore;
                  *  @returns {Boolean}
                  */
                 Collection.prototype.contains = function (model) {
-                    return this.models.indexOf(model) >= 0;
+                    return this.modelList.indexOf(model) >= 0;
                 };
                 /**
                  *  Determines whether the list is not empty.
@@ -221,13 +224,13 @@ var dcore;
                  *  @returns {Array}
                  */
                 Collection.prototype.toArray = function () {
-                    return this.models.slice(0);
+                    return this.modelList.slice(0);
                 };
                 /**
                  *  Performs an action on each model in the list.
                  */
                 Collection.prototype.forEach = function (action, context) {
-                    this.models.forEach(action, context);
+                    this.modelList.forEach(action, context);
                 };
                 return Collection;
             }(mvp.Model));
