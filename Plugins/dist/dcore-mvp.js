@@ -21,7 +21,7 @@ var dcore;
             }
             mvp.asModel = asModel;
             /**
-             *  @class spaMVP.Model
+             *  @class dcore.Model
              */
             var Model = (function () {
                 function Model() {
@@ -93,156 +93,6 @@ var dcore;
     })(plugins = dcore.plugins || (dcore.plugins = {}));
 })(dcore || (dcore = {}));
 //# sourceMappingURL=Model.js.map
-var dcore;
-(function (dcore) {
-    var plugins;
-    (function (plugins) {
-        var mvp;
-        (function (mvp) {
-            "use strict";
-            /**
-             *  Creates a collection of unique items.
-             *  @class spaMVP.HashSet
-             *  @property {Number} size
-             */
-            var HashSet = (function () {
-                function HashSet() {
-                    this.items = {};
-                    this.size = 0;
-                }
-                /**
-                 *  Determines whether an item is in the set.
-                 *  @returns {Boolean}
-                 */
-                HashSet.prototype.contains = function (item) {
-                    var hashCode = item.hash();
-                    if (!Object.prototype.hasOwnProperty.call(this.items, hashCode)) {
-                        return false;
-                    }
-                    var hashedItems = this.items[hashCode];
-                    if (!Array.isArray(hashedItems)) {
-                        return hashedItems.equals(item);
-                    }
-                    for (var i = 0, len = hashedItems.length; i < len; i++) {
-                        if (hashedItems[i].equals(item)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                };
-                /**
-                 *  Adds a new item to the set.
-                 *  @returns {Boolean}
-                 */
-                HashSet.prototype.add = function (item) {
-                    if (item === null ||
-                        typeof item === "undefined" ||
-                        this.contains(item)) {
-                        return false;
-                    }
-                    var hashCode = item.hash();
-                    // the first item with this hash
-                    if (!Object.prototype.hasOwnProperty.call(this.items, hashCode)) {
-                        this.items[hashCode] = item;
-                    }
-                    else if (!Array.isArray(this.items[hashCode])) {
-                        // the second item with this hash
-                        this.items[hashCode] = [this.items[hashCode], item];
-                    }
-                    else {
-                        // there are already two or more items with this hash
-                        this.items[hashCode].push(item);
-                    }
-                    this.size++;
-                    return true;
-                };
-                /**
-                 *  Removes an item from the set.
-                 *  @returns {Boolean}
-                 */
-                HashSet.prototype.remove = function (item) {
-                    if (!this.contains(item)) {
-                        return false;
-                    }
-                    var hashCode = item.hash();
-                    if (Array.isArray(this.items[hashCode])) {
-                        var hashCodeItems = this.items[hashCode];
-                        for (var i = 0, len = hashCodeItems.length; i < len; i++) {
-                            if (hashCodeItems[i].equals(item)) {
-                                hashCodeItems[i] = hashCodeItems[len - 1];
-                                hashCodeItems.length--;
-                                break;
-                            }
-                        }
-                    }
-                    else {
-                        delete this.items[hashCode];
-                    }
-                    this.size--;
-                    return true;
-                };
-                /**
-                 *  Removes all items from the set.
-                 *  @returns {Boolean}
-                 */
-                HashSet.prototype.clear = function () {
-                    if (this.size <= 0) {
-                        return false;
-                    }
-                    this.items = {};
-                    this.size = 0;
-                    return true;
-                };
-                /**
-                 *  Performs a an action on each item in the set.
-                 *  @param {Function} action
-                 *  @param {Object} [context] The action's context.
-                 */
-                HashSet.prototype.forEach = function (action, context) {
-                    var index = 0;
-                    var hashes = Object.keys(this.items);
-                    for (var i = 0, len = hashes.length; i < len; i++) {
-                        var hashIndexItem = this.items[hashes[i]];
-                        if (!Array.isArray(hashIndexItem)) {
-                            action.call(context, hashIndexItem, index);
-                            index++;
-                            continue;
-                        }
-                        for (var j = 0, hashLength = hashIndexItem.length; j < hashLength; j++) {
-                            action.call(context, hashIndexItem[j], index);
-                            index++;
-                        }
-                    }
-                };
-                /**
-                 *  Converts the set to Array.
-                 *  @returns {Array}
-                 */
-                HashSet.prototype.toArray = function () {
-                    var result = new Array(this.size);
-                    var index = 0;
-                    var hashes = Object.keys(this.items);
-                    for (var i = 0, hashesLen = hashes.length; i < hashesLen; i++) {
-                        var hashIndexItem = this.items[hashes[i]];
-                        if (!Array.isArray(hashIndexItem)) {
-                            result[index] = hashIndexItem;
-                            index++;
-                            continue;
-                        }
-                        for (var j = 0, len = hashIndexItem.length; j < len; j++) {
-                            result[index] = hashIndexItem[j];
-                            index++;
-                        }
-                    }
-                    return result;
-                };
-                return HashSet;
-            }());
-            mvp.HashSet = HashSet;
-        })(mvp = plugins.mvp || (plugins.mvp = {}));
-    })(plugins = dcore.plugins || (dcore.plugins = {}));
-})(dcore || (dcore = {}));
-//# sourceMappingURL=HashSet.js.map
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
     function __() { this.constructor = d; }
@@ -267,102 +117,100 @@ var dcore;
                 this.removeRange([item]);
             }
             /**
-             *  Composite pattern on spaMVP.Model.
+             *  Composite pattern on dcore.Model.
+             *  Holds the models in list.
+             *  Iterating over the models is not in the order of their insertion.
              *  It is usefull when you want to listen for collection of models.
-             *  @class spaMVP.Collection
-             *  @augments spaMVP.Model
+             *  @class dcore.Collection
+             *  @augments dcore.Model
              */
             var Collection = (function (_super) {
                 __extends(Collection, _super);
                 function Collection() {
                     _super.call(this);
-                    this.models = new mvp.HashSet();
+                    this.models = [];
                 }
                 Object.defineProperty(Collection.prototype, "size", {
                     get: function () {
-                        return this.models.size;
+                        return this.models.length;
                     },
                     enumerable: true,
                     configurable: true
                 });
-                Collection.prototype.equals = function (other) {
-                    return false;
-                };
-                Collection.prototype.hash = function () {
-                    return this.size ^ 17;
-                };
                 /**
-                 *  Adds new model to the set.
+                 *  Adds new model to the list.
                  *  @returns {Boolean}
                  */
                 Collection.prototype.add = function (model) {
-                    return this.addRange([model]);
+                    if (model) {
+                        this.addRange([model]);
+                    }
                 };
                 /**
-                 *  Adds range of models to the set.
+                 *  Adds range of models to the list.
                  *  @returns {Boolean}
                  */
                 Collection.prototype.addRange = function (models) {
-                    var added = [];
-                    for (var i = 0, len = models.length; i < len; i++) {
-                        var model = models[i];
-                        if (!this.models.add(model)) {
-                            continue;
-                        }
-                        model.on(mvp.ModelEvents.Change, onItemChange, this);
-                        model.on(mvp.ModelEvents.Destroy, onItemDestroy, this);
-                        added.push(model);
+                    var _this = this;
+                    if (!Array.isArray(models)) {
+                        return;
                     }
-                    var isModified = added.length > 0;
-                    if (isModified) {
-                        this.notify(mvp.CollectionEvents.AddedItems, added);
-                    }
-                    return isModified;
+                    models.forEach(function (m) {
+                        m.on(mvp.ModelEvents.Change, onItemChange, _this);
+                        m.on(mvp.ModelEvents.Destroy, onItemDestroy, _this);
+                        _this.models.push(m);
+                    });
+                    this.notify(mvp.CollectionEvents.AddedItems, models);
                 };
                 /**
-                 *  Removes a model from the set.
+                 *  Removes a model from the list.
                  *  @returns {Boolean}
                  */
                 Collection.prototype.remove = function (model) {
-                    return this.removeRange([model]);
+                    this.removeRange([model]);
                 };
                 /**
-                 *  Removes range of models.
+                 *  Removes range of models from the list.
                  *  @returns {Boolean}
                  */
                 Collection.prototype.removeRange = function (models) {
+                    if (!Array.isArray(models)) {
+                        return;
+                    }
                     var deleted = [];
                     for (var i = 0, len = models.length; i < len; i++) {
                         var model = models[i];
-                        if (!this.models.remove(model)) {
+                        var atIndex = this.models.indexOf(model);
+                        if (atIndex < 0) {
                             continue;
                         }
                         model.off(mvp.ModelEvents.Change, onItemChange, this);
                         model.off(mvp.ModelEvents.Destroy, onItemDestroy, this);
+                        this.models[atIndex] = this.models[this.size - 1];
+                        this.models.length--;
                         deleted.push(model);
                     }
                     var isModified = deleted.length > 0;
                     if (isModified) {
                         this.notify(mvp.CollectionEvents.DeletedItems, deleted);
                     }
-                    return isModified;
                 };
                 /**
-                 *  Removes all models from the set.
+                 *  Removes all models from the list.
                  *  @returns {Boolean}
                  */
                 Collection.prototype.clear = function () {
-                    return this.removeRange(this.toArray());
+                    this.removeRange(this.toArray());
                 };
                 /**
-                 *  Determines whether a model is in the collection.
+                 *  Determines whether a model is in the list.
                  *  @returns {Boolean}
                  */
                 Collection.prototype.contains = function (model) {
-                    return this.models.contains(model);
+                    return this.models.indexOf(model) >= 0;
                 };
                 /**
-                 *  Determines whether the collection is not empty.
+                 *  Determines whether the list is not empty.
                  *  @returns {Boolean}
                  */
                 Collection.prototype.any = function () {
@@ -373,10 +221,10 @@ var dcore;
                  *  @returns {Array}
                  */
                 Collection.prototype.toArray = function () {
-                    return this.models.toArray();
+                    return this.models.slice(0);
                 };
                 /**
-                 *  Performs an action on each model in the set.
+                 *  Performs an action on each model in the list.
                  */
                 Collection.prototype.forEach = function (action, context) {
                     this.models.forEach(action, context);
@@ -540,26 +388,20 @@ var dcore;
                 }
             }
             /**
-             *  @class spaMVP.View
+             *  @class dcore.View
              *  @param {HTMLElement} domNode The view's html element.
              *  @param {Function} [template] A function which renders view's html element.
-             *  @property {HTMLElement} domNode
+             *  @property {HTMLElement} root
+             *  @property {Function} [template]
              */
             var View = (function () {
-                function View(domNode, template) {
-                    if (!domNode) {
-                        throw new Error("Dom node cannot be null.");
+                function View(root, template) {
+                    if (!root) {
+                        throw new Error("Root must be an html element.");
                     }
-                    this._domNode = domNode;
+                    this.root = root;
                     this.template = template;
                 }
-                Object.defineProperty(View.prototype, "domNode", {
-                    get: function () {
-                        return this._domNode;
-                    },
-                    enumerable: true,
-                    configurable: true
-                });
                 /**
                  *  Maps a view action to given ui event disptached from html element.
                  *  Mapping works by using the dataset - e.g data-click="handleClick" maps to handleClick.
@@ -571,7 +413,7 @@ var dcore;
                     if (useCapture === void 0) { useCapture = false; }
                     mvp.UIEvent({
                         name: eventType,
-                        htmlElement: !selector ? this.domNode : this.domNode.querySelector(selector),
+                        htmlElement: !selector ? this.root : this.root.querySelector(selector),
                         handler: eventHandler,
                         eventType: eventType,
                         context: this,
@@ -581,24 +423,23 @@ var dcore;
                 };
                 /**
                  *  Renders the view.
+                 *  @param {any} [model]
                  *  @returns {HTMLElement}
                  */
                 View.prototype.render = function (model) {
-                    if (this.template) {
-                        this.domNode.innerHTML = this.template.call(this, model);
+                    if (typeof this.template === "function") {
+                        this.root.innerHTML = this.template.call(this, model);
                     }
-                    return this.domNode;
+                    return this.root;
                 };
                 /**
                  *  Removes all elements and mapped events.
                  */
                 View.prototype.destroy = function () {
-                    if (typeof this.domNode.detach === "function") {
-                        this.domNode.detach();
+                    if (typeof this.root.detach === "function") {
+                        this.root.detach();
                     }
-                    this.removeAllElements();
-                    this._domNode = null;
-                    return this;
+                    this.root = null;
                 };
                 /**
                  *  Finds an element by given selector.
@@ -606,7 +447,7 @@ var dcore;
                  *  @returns {Element}
                  */
                 View.prototype.query = function (selector) {
-                    return this.domNode.querySelector(selector);
+                    return this.root.querySelector(selector);
                 };
                 /**
                  *  Removes an element by given selector.
@@ -621,11 +462,11 @@ var dcore;
                 };
                 /**
                  *  Removes all elements.
-                 *  @returns {spaMVP.View}
+                 *  @returns {dcore.View}
                  */
                 View.prototype.removeAllElements = function () {
-                    while (this.domNode.firstElementChild) {
-                        this.domNode.removeChild(this.domNode.firstElementChild);
+                    while (this.root.firstElementChild) {
+                        this.root.removeChild(this.root.firstElementChild);
                     }
                     return this;
                 };
@@ -644,7 +485,7 @@ var dcore;
         (function (mvp) {
             "use strict";
             /**
-             *  @class spaMVP.Presenter
+             *  @class dcore.Presenter
              */
             var Presenter = (function () {
                 function Presenter() {

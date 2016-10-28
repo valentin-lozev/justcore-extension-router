@@ -2,7 +2,7 @@
     "use strict";
 
     /**
-     *  @class spaMVP.Presenter
+     *  @class dcore.Presenter
      */
     export class Presenter<TView extends MVPView, TModel extends MVPModel> {
         private _view: TView = null;

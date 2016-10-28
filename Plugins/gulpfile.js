@@ -6,7 +6,6 @@ var es = require('event-stream');
 
 var mvpFiles = [
     "src/mvp/Model",
-    "src/mvp/HashSet",
     "src/mvp/Collection",
     "src/mvp/lib/UIEvent",
     "src/mvp/View",

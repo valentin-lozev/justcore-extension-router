@@ -1,4 +1,17 @@
-﻿namespace dcore.plugins.mvp {
+﻿interface MVPCollection<TModel extends MVPModel> extends MVPModel {
+    size: number;
+    add(model: TModel): void;
+    addRange(models: TModel[]): void;
+    remove(model: TModel): void;
+    removeRange(models: TModel[]): void;
+    clear(): void;
+    contains(model: TModel): boolean;
+    any(): boolean;
+    toArray(): TModel[];
+    forEach(action: (item: TModel, index: number, array: TModel[]) => void, context: any): void;
+}
+
+namespace dcore.plugins.mvp {
     "use strict";
 
     export const CollectionEvents = {
@@ -16,85 +29,81 @@
     }
 
     /**
-     *  Composite pattern on spaMVP.Model.
+     *  Composite pattern on dcore.Model.
+     *  Holds the models in list.
+     *  Iterating over the models is not in the order of their insertion.
      *  It is usefull when you want to listen for collection of models.
-     *  @class spaMVP.Collection
-     *  @augments spaMVP.Model
+     *  @class dcore.Collection
+     *  @augments dcore.Model
      */
-    export class Collection<TModel extends Model & MVPEquatable<TModel>> extends Model {
-        private models: HashSet<TModel> = new HashSet<TModel>();
+    export class Collection<TModel extends MVPModel> extends Model implements MVPCollection<TModel> {
+        private models: TModel[] = [];
 
         constructor() {
             super();
         }
 
         get size(): number {
-            return this.models.size;
-        }
-
-        equals(other: TModel): boolean {
-            return false;
-        }
-
-        hash(): number {
-            return this.size ^ 17;
+            return this.models.length;
         }
 
         /**
-         *  Adds new model to the set.
+         *  Adds new model to the list.
          *  @returns {Boolean}
          */
-        add(model: TModel): boolean {
-            return this.addRange([model]);
+        add(model: TModel): void {
+            if (model) {
+                this.addRange([model]);
+            }
         }
 
         /**
-         *  Adds range of models to the set.
+         *  Adds range of models to the list.
          *  @returns {Boolean}
          */
-        addRange(models: TModel[]): boolean {
-            let added = [];
-            for (let i = 0, len = models.length; i < len; i++) {
-                let model = models[i];
-                if (!this.models.add(model)) {
-                    continue;
-                }
-
-                model.on(ModelEvents.Change, onItemChange, this);
-                model.on(ModelEvents.Destroy, onItemDestroy, this);
-                added.push(model);
+        addRange(models: TModel[]): void {
+            if (!Array.isArray(models)) {
+                return;
             }
 
-            let isModified = added.length > 0;
-            if (isModified) {
-                this.notify(CollectionEvents.AddedItems, added);
+            models.forEach(m => {
+                m.on(ModelEvents.Change, onItemChange, this);
+                m.on(ModelEvents.Destroy, onItemDestroy, this);
+                this.models.push(m);
+            });
+
+            this.notify(CollectionEvents.AddedItems, models);
+        }
+
+        /**
+         *  Removes a model from the list.
+         *  @returns {Boolean}
+         */
+        remove(model: TModel): void {
+            this.removeRange([model]);
+        }
+
+        /**
+         *  Removes range of models from the list.
+         *  @returns {Boolean}
+         */
+        removeRange(models: TModel[]): void {
+            if (!Array.isArray(models)) {
+                return;
             }
 
-            return isModified;
-        }
-
-        /**
-         *  Removes a model from the set.
-         *  @returns {Boolean}
-         */
-        remove(model: TModel): boolean {
-            return this.removeRange([model]);
-        }
-
-        /**
-         *  Removes range of models.
-         *  @returns {Boolean}
-         */
-        removeRange(models: TModel[]): boolean {
             let deleted = [];
             for (let i = 0, len = models.length; i < len; i++) {
                 let model = models[i];
-                if (!this.models.remove(model)) {
+                let atIndex = this.models.indexOf(model);
+                if (atIndex < 0) {
                     continue;
                 }
 
                 model.off(ModelEvents.Change, onItemChange, this);
                 model.off(ModelEvents.Destroy, onItemDestroy, this);
+                this.models[atIndex] = this.models[this.size - 1];
+                this.models.length--;
                 deleted.push(model);
             }
 
@@ -102,28 +111,26 @@
             if (isModified) {
                 this.notify(CollectionEvents.DeletedItems, deleted);
             }
-
-            return isModified;
         }
 
         /**
-         *  Removes all models from the set.
+         *  Removes all models from the list.
          *  @returns {Boolean}
          */
-        clear(): boolean {
-            return this.removeRange(this.toArray());
+        clear(): void {
+            this.removeRange(this.toArray());
         }
 
         /**
-         *  Determines whether a model is in the collection.
+         *  Determines whether a model is in the list.
          *  @returns {Boolean}
          */
         contains(model: TModel): boolean {
-            return this.models.contains(model);
+            return this.models.indexOf(model) >= 0;
         }
 
         /**
-         *  Determines whether the collection is not empty.
+         *  Determines whether the list is not empty.
          *  @returns {Boolean}
          */
         any(): boolean {
@@ -135,13 +142,13 @@
          *  @returns {Array}
          */
         toArray(): TModel[] {
-            return this.models.toArray();
+            return this.models.slice(0);
         }
 
         /**
-         *  Performs an action on each model in the set.
+         *  Performs an action on each model in the list.
          */
-        forEach(action: (item: TModel, index: number) => void, context: Object): void {
+        forEach(action: (item: TModel, index: number, array: TModel[]) => void, context: any): void {
             this.models.forEach(action, context);
         }
     }

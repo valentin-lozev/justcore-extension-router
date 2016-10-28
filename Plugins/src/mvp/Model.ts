@@ -29,7 +29,7 @@ namespace dcore.plugins.mvp {
 
 
     /**
-     *  @class spaMVP.Model
+     *  @class dcore.Model
      */
     export class Model implements MVPModel {
         private listeners: Object = {};

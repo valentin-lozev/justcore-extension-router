@@ -22,9 +22,6 @@
       "Path": "src/mvp/Model.js"
     },
     {
-      "Path": "src/mvp/HashSet.js"
-    },
-    {
       "Path": "src/mvp/Collection.js"
     },
     {

@@ -29,7 +29,7 @@ namespace dcore.plugins.mvp {
 
 
     /**
-     *  @class spaMVP.Model
+     *  @class dcore.Model
      */
     export class Model implements MVPModel {
         private listeners: Object = {};
@@ -102,167 +102,19 @@ namespace dcore.plugins.mvp {
         }
     }
 }
-interface MVPEquatable<T> {
-    equals(other: T): boolean;
-    hash(): number;
+interface MVPCollection<TModel extends MVPModel> extends MVPModel {
+    size: number;
+    add(model: TModel): void;
+    addRange(models: TModel[]): void;
+    remove(model: TModel): void;
+    removeRange(models: TModel[]): void;
+    clear(): void;
+    contains(model: TModel): boolean;
+    any(): boolean;
+    toArray(): TModel[];
+    forEach(action: (item: TModel, index: number, array: TModel[]) => void, context: any): void;
 }
 
-namespace dcore.plugins.mvp {
-    "use strict";
-
-    /**
-     *  Creates a collection of unique items.
-     *  @class spaMVP.HashSet
-     *  @property {Number} size  
-     */
-    export class HashSet<T extends MVPEquatable<T>> {
-        private items: Object = {};
-        public size: number = 0;
-
-        /**
-         *  Determines whether an item is in the set.
-         *  @returns {Boolean}
-         */
-        contains(item: T): boolean {
-            let hashCode = item.hash();
-            if (!Object.prototype.hasOwnProperty.call(this.items, hashCode)) {
-                return false;
-            }
-
-            let hashedItems = this.items[hashCode];
-            if (!Array.isArray(hashedItems)) {
-                return hashedItems.equals(item);
-            }
-
-            for (let i = 0, len = hashedItems.length; i < len; i++) {
-                if (hashedItems[i].equals(item)) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        /**
-         *  Adds a new item to the set.
-         *  @returns {Boolean}
-         */
-        add(item: T): boolean {
-            if (item === null ||
-                typeof item === "undefined" ||
-                this.contains(item)) {
-                return false;
-            }
-
-            let hashCode = item.hash();
-
-            // the first item with this hash
-            if (!Object.prototype.hasOwnProperty.call(this.items, hashCode)) {
-                this.items[hashCode] = item;
-            } else if (!Array.isArray(this.items[hashCode])) {
-                // the second item with this hash
-                this.items[hashCode] = [this.items[hashCode], item];
-            } else {
-                // there are already two or more items with this hash
-                this.items[hashCode].push(item);
-            }
-
-            this.size++;
-            return true;
-        }
-
-        /**
-         *  Removes an item from the set.
-         *  @returns {Boolean}
-         */
-        remove(item: T): boolean {
-            if (!this.contains(item)) {
-                return false;
-            }
-
-            let hashCode = item.hash();
-
-            if (Array.isArray(this.items[hashCode])) {
-                let hashCodeItems = this.items[hashCode];
-                for (let i = 0, len = hashCodeItems.length; i < len; i++) {
-                    if (hashCodeItems[i].equals(item)) {
-                        hashCodeItems[i] = hashCodeItems[len - 1];
-                        hashCodeItems.length--;
-                        break;
-                    }
-                }
-            } else {
-                delete this.items[hashCode];
-            }
-
-            this.size--;
-            return true;
-        }
-
-        /**
-         *  Removes all items from the set.
-         *  @returns {Boolean}
-         */
-        clear(): boolean {
-            if (this.size <= 0) {
-                return false;
-            }
-
-            this.items = {};
-            this.size = 0;
-            return true;
-        }
-
-        /**
-         *  Performs a an action on each item in the set.
-         *  @param {Function} action
-         *  @param {Object} [context] The action's context.
-         */
-        forEach(action: (item: T, index: number) => void, context?: Object): void {
-            let index = 0;
-            let hashes = Object.keys(this.items);
-            for (let i = 0, len = hashes.length; i < len; i++) {
-                let hashIndexItem = this.items[hashes[i]];
-                if (!Array.isArray(hashIndexItem)) {
-                    action.call(context, hashIndexItem, index);
-                    index++;
-                    continue;
-                }
-
-                for (let j = 0, hashLength = hashIndexItem.length; j < hashLength; j++) {
-                    action.call(context, hashIndexItem[j], index);
-                    index++;
-                }
-            }
-        }
-
-        /**
-         *  Converts the set to Array.
-         *  @returns {Array}
-         */
-        toArray(): T[] {
-            let result = new Array(this.size);
-            let index = 0;
-            let hashes = Object.keys(this.items);
-            for (let i = 0, hashesLen = hashes.length; i < hashesLen; i++) {
-                let hashIndexItem = this.items[hashes[i]];
-                if (!Array.isArray(hashIndexItem)) {
-                    result[index] = hashIndexItem;
-                    index++;
-                    continue;
-                }
-
-                for (let j = 0, len = hashIndexItem.length; j < len; j++) {
-                    result[index] = hashIndexItem[j];
-                    index++;
-                }
-            }
-
-            return result;
-        }
-    }
-
-}
 namespace dcore.plugins.mvp {
     "use strict";
 
@@ -281,85 +133,81 @@ namespace dcore.plugins.mvp {
     }
 
     /**
-     *  Composite pattern on spaMVP.Model.
+     *  Composite pattern on dcore.Model.
+     *  Holds the models in list.
+     *  Iterating over the models is not in the order of their insertion.
      *  It is usefull when you want to listen for collection of models.
-     *  @class spaMVP.Collection
-     *  @augments spaMVP.Model
+     *  @class dcore.Collection
+     *  @augments dcore.Model
      */
-    export class Collection<TModel extends Model & MVPEquatable<TModel>> extends Model {
-        private models: HashSet<TModel> = new HashSet<TModel>();
+    export class Collection<TModel extends MVPModel> extends Model implements MVPCollection<TModel> {
+        private models: TModel[] = [];
 
         constructor() {
             super();
         }
 
         get size(): number {
-            return this.models.size;
-        }
-
-        equals(other: TModel): boolean {
-            return false;
-        }
-
-        hash(): number {
-            return this.size ^ 17;
+            return this.models.length;
         }
 
         /**
-         *  Adds new model to the set.
+         *  Adds new model to the list.
          *  @returns {Boolean}
          */
-        add(model: TModel): boolean {
-            return this.addRange([model]);
+        add(model: TModel): void {
+            if (model) {
+                this.addRange([model]);
+            }
         }
 
         /**
-         *  Adds range of models to the set.
+         *  Adds range of models to the list.
          *  @returns {Boolean}
          */
-        addRange(models: TModel[]): boolean {
-            let added = [];
-            for (let i = 0, len = models.length; i < len; i++) {
-                let model = models[i];
-                if (!this.models.add(model)) {
-                    continue;
-                }
-
-                model.on(ModelEvents.Change, onItemChange, this);
-                model.on(ModelEvents.Destroy, onItemDestroy, this);
-                added.push(model);
+        addRange(models: TModel[]): void {
+            if (!Array.isArray(models)) {
+                return;
             }
 
-            let isModified = added.length > 0;
-            if (isModified) {
-                this.notify(CollectionEvents.AddedItems, added);
+            models.forEach(m => {
+                m.on(ModelEvents.Change, onItemChange, this);
+                m.on(ModelEvents.Destroy, onItemDestroy, this);
+                this.models.push(m);
+            });
+
+            this.notify(CollectionEvents.AddedItems, models);
+        }
+
+        /**
+         *  Removes a model from the list.
+         *  @returns {Boolean}
+         */
+        remove(model: TModel): void {
+            this.removeRange([model]);
+        }
+
+        /**
+         *  Removes range of models from the list.
+         *  @returns {Boolean}
+         */
+        removeRange(models: TModel[]): void {
+            if (!Array.isArray(models)) {
+                return;
             }
 
-            return isModified;
-        }
-
-        /**
-         *  Removes a model from the set.
-         *  @returns {Boolean}
-         */
-        remove(model: TModel): boolean {
-            return this.removeRange([model]);
-        }
-
-        /**
-         *  Removes range of models.
-         *  @returns {Boolean}
-         */
-        removeRange(models: TModel[]): boolean {
             let deleted = [];
             for (let i = 0, len = models.length; i < len; i++) {
                 let model = models[i];
-                if (!this.models.remove(model)) {
+                let atIndex = this.models.indexOf(model);
+                if (atIndex < 0) {
                     continue;
                 }
 
                 model.off(ModelEvents.Change, onItemChange, this);
                 model.off(ModelEvents.Destroy, onItemDestroy, this);
+                this.models[atIndex] = this.models[this.size - 1];
+                this.models.length--;
                 deleted.push(model);
             }
 
@@ -367,28 +215,26 @@ namespace dcore.plugins.mvp {
             if (isModified) {
                 this.notify(CollectionEvents.DeletedItems, deleted);
             }
-
-            return isModified;
         }
 
         /**
-         *  Removes all models from the set.
+         *  Removes all models from the list.
          *  @returns {Boolean}
          */
-        clear(): boolean {
-            return this.removeRange(this.toArray());
+        clear(): void {
+            this.removeRange(this.toArray());
         }
 
         /**
-         *  Determines whether a model is in the collection.
+         *  Determines whether a model is in the list.
          *  @returns {Boolean}
          */
         contains(model: TModel): boolean {
-            return this.models.contains(model);
+            return this.models.indexOf(model) >= 0;
         }
 
         /**
-         *  Determines whether the collection is not empty.
+         *  Determines whether the list is not empty.
          *  @returns {Boolean}
          */
         any(): boolean {
@@ -400,13 +246,13 @@ namespace dcore.plugins.mvp {
          *  @returns {Array}
          */
         toArray(): TModel[] {
-            return this.models.toArray();
+            return this.models.slice(0);
         }
 
         /**
-         *  Performs an action on each model in the set.
+         *  Performs an action on each model in the list.
          */
-        forEach(action: (item: TModel, index: number) => void, context: Object): void {
+        forEach(action: (item: TModel, index: number, array: TModel[]) => void, context: any): void {
             this.models.forEach(action, context);
         }
     }
@@ -582,26 +428,23 @@ namespace dcore.plugins.mvp {
     }
 
     /**
-     *  @class spaMVP.View
+     *  @class dcore.View
      *  @param {HTMLElement} domNode The view's html element.
      *  @param {Function} [template] A function which renders view's html element.
-     *  @property {HTMLElement} domNode
+     *  @property {HTMLElement} root
+     *  @property {Function} [template]
      */
     export class View implements MVPView {
-        private _domNode: HTMLElement;
-        private template: (model: any) => string;
+        public template: (model: any) => string;
+        public root: HTMLElement;
 
-        constructor(domNode: HTMLElement, template?: (model: any) => string) {
-            if (!domNode) {
-                throw new Error("Dom node cannot be null.");
+        constructor(root: HTMLElement, template?: (model: any) => string) {
+            if (!root) {
+                throw new Error("Root must be an html element.");
             }
 
-            this._domNode = domNode;
+            this.root = root;
             this.template = template;
-        }
-
-        get domNode(): HTMLElement {
-            return this._domNode;
         }
 
         /**
@@ -614,7 +457,7 @@ namespace dcore.plugins.mvp {
         map(eventType: string, useCapture: boolean = false, selector?: string): this {
             UIEvent({
                 name: eventType,
-                htmlElement: !selector ? this.domNode : this.domNode.querySelector(selector),
+                htmlElement: !selector ? this.root : this.root.querySelector(selector),
                 handler: eventHandler,
                 eventType: eventType,
                 context: this,
@@ -626,27 +469,26 @@ namespace dcore.plugins.mvp {
 
         /**
          *  Renders the view.
+         *  @param {any} [model]
          *  @returns {HTMLElement}
          */
-        render(model: any): HTMLElement {
-            if (this.template) {
-                this.domNode.innerHTML = this.template.call(this, model);
+        render(model?: any): HTMLElement {
+            if (typeof this.template === "function") {
+                this.root.innerHTML = this.template.call(this, model);
             }
 
-            return this.domNode;
+            return this.root;
         }
 
         /**
          *  Removes all elements and mapped events.
          */
-        destroy(): this {
-            if (typeof this.domNode.detach === "function") {
-                this.domNode.detach();
+        destroy(): void {
+            if (typeof this.root.detach === "function") {
+                this.root.detach();
             }
-
-            this.removeAllElements();
-            this._domNode = null;
-            return this;
+            
+            this.root = null;
         }
 
         /**
@@ -655,7 +497,7 @@ namespace dcore.plugins.mvp {
          *  @returns {Element}
          */
         query(selector: string): Element {
-            return this.domNode.querySelector(selector);
+            return this.root.querySelector(selector);
         }
 
         /**
@@ -673,11 +515,11 @@ namespace dcore.plugins.mvp {
 
         /**
          *  Removes all elements.
-         *  @returns {spaMVP.View}
+         *  @returns {dcore.View}
          */
         removeAllElements(): this {
-            while (this.domNode.firstElementChild) {
-                this.domNode.removeChild(this.domNode.firstElementChild);
+            while (this.root.firstElementChild) {
+                this.root.removeChild(this.root.firstElementChild);
             }
 
             return this;
@@ -688,7 +530,7 @@ namespace dcore.plugins.mvp {
     "use strict";
 
     /**
-     *  @class spaMVP.Presenter
+     *  @class dcore.Presenter
      */
     export class Presenter<TView extends MVPView, TModel extends MVPModel> {
         private _view: TView = null;

@@ -21,26 +21,23 @@ namespace dcore.plugins.mvp {
     }
 
     /**
-     *  @class spaMVP.View
+     *  @class dcore.View
      *  @param {HTMLElement} domNode The view's html element.
      *  @param {Function} [template] A function which renders view's html element.
-     *  @property {HTMLElement} domNode
+     *  @property {HTMLElement} root
+     *  @property {Function} [template]
      */
     export class View implements MVPView {
-        private _domNode: HTMLElement;
-        private template: (model: any) => string;
+        public template: (model: any) => string;
+        public root: HTMLElement;
 
-        constructor(domNode: HTMLElement, template?: (model: any) => string) {
-            if (!domNode) {
-                throw new Error("Dom node cannot be null.");
+        constructor(root: HTMLElement, template?: (model: any) => string) {
+            if (!root) {
+                throw new Error("Root must be an html element.");
             }
 
-            this._domNode = domNode;
+            this.root = root;
             this.template = template;
-        }
-
-        get domNode(): HTMLElement {
-            return this._domNode;
         }
 
         /**
@@ -53,7 +50,7 @@ namespace dcore.plugins.mvp {
         map(eventType: string, useCapture: boolean = false, selector?: string): this {
             UIEvent({
                 name: eventType,
-                htmlElement: !selector ? this.domNode : this.domNode.querySelector(selector),
+                htmlElement: !selector ? this.root : this.root.querySelector(selector),
                 handler: eventHandler,
                 eventType: eventType,
                 context: this,
@@ -65,27 +62,26 @@ namespace dcore.plugins.mvp {
 
         /**
          *  Renders the view.
+         *  @param {any} [model]
          *  @returns {HTMLElement}
          */
-        render(model: any): HTMLElement {
-            if (this.template) {
-                this.domNode.innerHTML = this.template.call(this, model);
+        render(model?: any): HTMLElement {
+            if (typeof this.template === "function") {
+                this.root.innerHTML = this.template.call(this, model);
             }
 
-            return this.domNode;
+            return this.root;
         }
 
         /**
          *  Removes all elements and mapped events.
          */
-        destroy(): this {
-            if (typeof this.domNode.detach === "function") {
-                this.domNode.detach();
+        destroy(): void {
+            if (typeof this.root.detach === "function") {
+                this.root.detach();
             }
-
-            this.removeAllElements();
-            this._domNode = null;
-            return this;
+            
+            this.root = null;
         }
 
         /**
@@ -94,7 +90,7 @@ namespace dcore.plugins.mvp {
          *  @returns {Element}
          */
         query(selector: string): Element {
-            return this.domNode.querySelector(selector);
+            return this.root.querySelector(selector);
         }
 
         /**
@@ -112,11 +108,11 @@ namespace dcore.plugins.mvp {
 
         /**
          *  Removes all elements.
-         *  @returns {spaMVP.View}
+         *  @returns {dcore.View}
          */
         removeAllElements(): this {
-            while (this.domNode.firstElementChild) {
-                this.domNode.removeChild(this.domNode.firstElementChild);
+            while (this.root.firstElementChild) {
+                this.root.removeChild(this.root.firstElementChild);
             }
 
             return this;
