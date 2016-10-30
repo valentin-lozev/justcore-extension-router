@@ -239,138 +239,23 @@ var dcore;
     })(plugins = dcore.plugins || (dcore.plugins = {}));
 })(dcore || (dcore = {}));
 //# sourceMappingURL=Collection.js.map
-var dcore;
-(function (dcore) {
-    var plugins;
-    (function (plugins) {
-        var mvp;
-        (function (mvp) {
-            "use strict";
-            /**
-             *  Author: Martin Chaov
-             *  github: https://github.com/mchaov/JSEventsManager
-             *  Smart events managing by altering the properties of a HTML element
-             */
-            // 'use strict'; -> issues with iOS Safari on tablet devices: 09.11.2015
-            Element.prototype.trigger = function () { return false; };
-            Element.prototype.hasEvent = function () { return false; };
-            Element.prototype.detach = function () { return false; };
-            Element.prototype.events = false;
-            function removeEvent(name) {
-                var ev, type, handler, useCapture;
-                ev = this.events[name];
-                useCapture = ev.useCapture;
-                type = ev.eventType;
-                handler = ev.handler;
-                this.removeEventListener(type, handler, useCapture);
-                delete this.eventsList[name];
-            }
-            function detachEvent(name) {
-                var i;
-                if (name === undefined || name === '') {
-                    for (i in this.eventsList) {
-                        removeEvent.call(this, i);
-                    }
-                    this.eventsList = {};
+// pollyfill
+if (!Element.prototype.matches) {
+    Element.prototype.matches =
+        Element.prototype["matchesSelector"] ||
+            Element.prototype["mozMatchesSelector"] ||
+            Element.prototype["msMatchesSelector"] ||
+            Element.prototype["oMatchesSelector"] ||
+            Element.prototype["webkitMatchesSelector"] ||
+            function (s) {
+                var matches = (this.document || this.ownerDocument).querySelectorAll(s);
+                var i = matches.length;
+                while (--i >= 0 && matches.item(i) !== this) {
+                    continue;
                 }
-                else if (this.hasEvent(name)) {
-                    removeEvent.call(this, name);
-                }
-                return this.eventsList;
-            }
-            function hasEvent(name) {
-                return typeof this.eventsList[name] === 'object' ? this.eventsList[name] : false;
-            }
-            function triggerEvent(name) {
-                var evt = this.hasEvent(name);
-                if (typeof evt.handler === 'function') {
-                    return evt.handler();
-                }
-                return false;
-            }
-            function UIEvent(config) {
-                if (!(this instanceof UIEvent)) {
-                    return new UIEvent(config);
-                }
-                this.htmlElement = config.htmlElement;
-                this.eventConfig = {
-                    name: config.name,
-                    eventType: config.eventType,
-                    handler: config.handler === undefined ? false : config.handler,
-                    useCapture: config.useCapture === undefined ? false : config.useCapture,
-                    context: config.context === undefined ? null : config.context
-                };
-                this.init();
-            }
-            mvp.UIEvent = UIEvent;
-            UIEvent.prototype.init = function () {
-                if (this.htmlElement.eventsList === undefined) {
-                    Object.defineProperties(this.htmlElement, {
-                        'eventsList': {
-                            writable: true,
-                            enumerable: false,
-                            configurable: false,
-                            value: {}
-                        },
-                        'events': {
-                            enumerable: false,
-                            configurable: false,
-                            get: function () {
-                                return this.eventsList;
-                            },
-                            set: function (e) {
-                                return this.eventsList[e.name] = e;
-                            }
-                        },
-                        'trigger': {
-                            writable: false,
-                            enumerable: false,
-                            configurable: false,
-                            value: triggerEvent
-                        },
-                        'hasEvent': {
-                            writable: false,
-                            enumerable: false,
-                            configurable: false,
-                            value: hasEvent
-                        },
-                        'detach': {
-                            writable: false,
-                            enumerable: false,
-                            configurable: false,
-                            value: detachEvent
-                        }
-                    });
-                }
-                else if (this.htmlElement.hasEvent(this.eventConfig.name)) {
-                    return false;
-                }
-                this.eventConfig.handler = this.eventConfig.handler.bind(this.eventConfig.context || this);
-                this.htmlElement.addEventListener(this.eventConfig.eventType, this.eventConfig.handler, this.eventConfig.useCapture);
-                this.htmlElement.events = this.eventConfig;
+                return i > -1;
             };
-            Object.defineProperties(UIEvent.prototype, {
-                'detach': {
-                    writable: false,
-                    enumerable: false,
-                    configurable: false,
-                    value: function (name) {
-                        return detachEvent.call(this.htmlElement, name);
-                    }
-                },
-                'trigger': {
-                    writable: false,
-                    enumerable: false,
-                    configurable: false,
-                    value: function (name) {
-                        return triggerEvent.call(this.htmlElement, name || this.eventConfig.name);
-                    }
-                }
-            });
-        })(mvp = plugins.mvp || (plugins.mvp = {}));
-    })(plugins = dcore.plugins || (dcore.plugins = {}));
-})(dcore || (dcore = {}));
-//# sourceMappingURL=UIEvent.js.map
+}
 var dcore;
 (function (dcore) {
     var plugins;
@@ -378,100 +263,93 @@ var dcore;
         var mvp;
         (function (mvp) {
             "use strict";
-            function eventHandler(ev) {
-                var target = ev.target;
-                var dataset = target.dataset;
-                if (!dataset.hasOwnProperty(ev.type)) {
-                    return;
+            var hasOwnProperty = Object.prototype.hasOwnProperty;
+            var EventListenerConfig = (function () {
+                function EventListenerConfig(type, selector, listener, useCapture, context) {
+                    this.type = type;
+                    this.selector = selector;
+                    this.listener = listener;
+                    this.useCapture = useCapture;
+                    this.context = context;
                 }
-                var callbackName = dataset[ev.type];
-                if (typeof this[callbackName] === "function") {
-                    this[callbackName](ev);
-                    return;
-                }
-            }
+                EventListenerConfig.prototype.handleEvent = function (ev) {
+                    var target = ev.target;
+                    do {
+                        if (!target.matches(this.selector)) {
+                            target = target.parentElement;
+                            continue;
+                        }
+                        ev.delegateTarget = target;
+                        this.listener(ev);
+                        return;
+                    } while (target && target !== this.context.root);
+                };
+                return EventListenerConfig;
+            }());
             /**
              *  @class dcore.View
-             *  @param {HTMLElement} domNode The view's html element.
-             *  @param {Function} [template] A function which renders view's html element.
              *  @property {HTMLElement} root
-             *  @property {Function} [template]
              */
             var View = (function () {
-                function View(root, template) {
-                    if (!root) {
-                        throw new Error("Root must be an html element.");
-                    }
+                function View(root) {
+                    this.eventListeners = {};
                     this.root = root;
-                    this.template = template;
                 }
                 /**
-                 *  Maps a view action to given ui event disptached from html element.
-                 *  Mapping works by using the dataset - e.g data-click="handleClick" maps to handleClick.
-                 * @param eventType
-                 * @param useCapture
-                 * @param selector
-                 */
-                View.prototype.map = function (eventType, useCapture, selector) {
-                    if (useCapture === void 0) { useCapture = false; }
-                    mvp.UIEvent({
-                        name: eventType,
-                        htmlElement: !selector ? this.root : this.root.querySelector(selector),
-                        handler: eventHandler,
-                        eventType: eventType,
-                        context: this,
-                        useCapture: useCapture
-                    });
-                    return this;
-                };
-                /**
                  *  Renders the view.
-                 *  @param {any} [model]
                  *  @returns {HTMLElement}
                  */
-                View.prototype.render = function (model) {
-                    if (typeof this.template === "function") {
-                        this.root.innerHTML = this.template.call(this, model);
-                    }
+                View.prototype.render = function (data) {
                     return this.root;
                 };
                 /**
-                 *  Removes all elements and mapped events.
+                 *  Adds event listeners to its root element by delegating to given selectors.
+                 * @param {Array} configs
+                 */
+                View.prototype.addEventListeners = function (configs) {
+                    var _this = this;
+                    if (Array.isArray(configs)) {
+                        configs.forEach(function (c) { return _this.addEventListener(c); });
+                    }
+                    return this;
+                };
+                /**
+                 *  Adds an event listener to its root element by delegating to given selector.
+                 * @param {Object} config
+                 */
+                View.prototype.addEventListener = function (config) {
+                    if (typeof config !== "object" || config === null) {
+                        throw new TypeError("Listener config must be passed as object.");
+                    }
+                    var eventType = config.type;
+                    if (typeof eventType !== "string") {
+                        throw new TypeError("Event type must be a string.");
+                    }
+                    var configObj = new EventListenerConfig(eventType, config.selector, config.listener, !!config.useCapture, this);
+                    var key = eventType + " " + configObj.selector + " " + configObj.useCapture;
+                    if (hasOwnProperty.call(this.eventListeners, key)) {
+                        return this;
+                    }
+                    configObj.handleEvent = configObj.handleEvent.bind(configObj);
+                    this.root.addEventListener(eventType, configObj.handleEvent, configObj.useCapture);
+                    this.eventListeners[key] = configObj;
+                    return this;
+                };
+                /**
+                 *  Destroys the view.
                  */
                 View.prototype.destroy = function () {
-                    if (typeof this.root.detach === "function") {
-                        this.root.detach();
-                    }
+                    var _this = this;
+                    Object
+                        .keys(this.eventListeners)
+                        .forEach(function (type) {
+                        var listener = _this.eventListeners[type];
+                        _this.root.removeEventListener(listener.type, listener.handleEvent, listener.useCapture);
+                        delete _this.eventListeners[type];
+                    });
+                    ;
+                    this.eventListeners = {};
                     this.root = null;
-                };
-                /**
-                 *  Finds an element by given selector.
-                 *  @param {String} selector
-                 *  @returns {Element}
-                 */
-                View.prototype.query = function (selector) {
-                    return this.root.querySelector(selector);
-                };
-                /**
-                 *  Removes an element by given selector.
-                 *  @param {String} selector
-                 */
-                View.prototype.removeElement = function (selector) {
-                    var element = this.query(selector);
-                    if (element) {
-                        element.parentElement.removeChild(element);
-                    }
-                    return this;
-                };
-                /**
-                 *  Removes all elements.
-                 *  @returns {dcore.View}
-                 */
-                View.prototype.removeAllElements = function () {
-                    while (this.root.firstElementChild) {
-                        this.root.removeChild(this.root.firstElementChild);
-                    }
-                    return this;
                 };
                 return View;
             }());
@@ -491,23 +369,16 @@ var dcore;
              *  @class dcore.Presenter
              */
             var Presenter = (function () {
-                function Presenter() {
-                    this._view = null;
+                function Presenter(view, model) {
                     this._model = null;
+                    this._view = null;
                     this._modelHandlers = {};
+                    this._view = view;
+                    this.model = model;
                 }
                 Object.defineProperty(Presenter.prototype, "view", {
                     get: function () {
                         return this._view;
-                    },
-                    set: function (value) {
-                        if (this.view === value) {
-                            return;
-                        }
-                        if (this.view) {
-                            this.view.destroy();
-                        }
-                        this._view = value;
                     },
                     enumerable: true,
                     configurable: true
@@ -518,20 +389,23 @@ var dcore;
                     },
                     set: function (model) {
                         var _this = this;
-                        if (this._model === model) {
+                        if (this.model === model) {
                             return;
                         }
-                        Object.keys(this._modelHandlers).forEach(function (type) {
+                        var shouldDetach = this.model instanceof mvp.Model;
+                        var shouldAttach = model instanceof mvp.Model;
+                        Object
+                            .keys(this._modelHandlers)
+                            .forEach(function (type) {
                             var eventHandler = _this._modelHandlers[type];
-                            if (_this._model) {
-                                _this._model.off(type, eventHandler, _this);
+                            if (shouldDetach) {
+                                _this.model["off"](type, eventHandler, _this);
                             }
-                            if (model) {
-                                model.on(type, eventHandler, _this);
+                            if (shouldAttach) {
+                                model["on"](type, eventHandler, _this);
                             }
                         });
                         this._model = model;
-                        this.render();
                     },
                     enumerable: true,
                     configurable: true
@@ -549,17 +423,15 @@ var dcore;
                  *  Renders its view.
                  */
                 Presenter.prototype.render = function () {
-                    if (this.view) {
-                        return this.view.render(this.model);
-                    }
-                    return null;
+                    return this.view.render(this.model);
                 };
                 /**
-                 *  Destroys its view and model.
+                 *  Destroys its model and view.
                  */
                 Presenter.prototype.destroy = function () {
-                    this.view = null;
                     this.model = null;
+                    this._view.destroy();
+                    this._view = null;
                 };
                 return Presenter;
             }());

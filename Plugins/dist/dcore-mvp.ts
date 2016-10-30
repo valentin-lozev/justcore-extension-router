@@ -27,7 +27,6 @@ namespace dcore.plugins.mvp {
         return <T & MVPModel>target;
     }
 
-
     /**
      *  @class dcore.Model
      */
@@ -260,272 +259,164 @@ namespace dcore.plugins.mvp {
         }
     }
 }
-interface Element {
-    trigger(): boolean;
-    hasEvent(name: string): boolean;
-    detach(): boolean;
-    events: boolean;
-}
-
-namespace dcore.plugins.mvp {
-    "use strict";
-
-    /**
-     *  Author: Martin Chaov
-     *  github: https://github.com/mchaov/JSEventsManager
-     *  Smart events managing by altering the properties of a HTML element
-     */
-
-    // 'use strict'; -> issues with iOS Safari on tablet devices: 09.11.2015
-
-    Element.prototype.trigger = function () { return false; }
-    Element.prototype.hasEvent = function () { return false; }
-    Element.prototype.detach = function () { return false; }
-    Element.prototype.events = false;
-
-    function removeEvent(name) {
-        var ev, type, handler, useCapture;
-        ev = this.events[name];
-        useCapture = ev.useCapture;
-        type = ev.eventType;
-        handler = ev.handler;
-        this.removeEventListener(type, handler, useCapture);
-        delete this.eventsList[name];
-    }
-
-    function detachEvent(name) {
-        var i;
-
-        if (name === undefined || name === '') {
-
-            for (i in this.eventsList) {
-                removeEvent.call(this, i);
-            }
-            this.eventsList = {};
-        }
-        else if (this.hasEvent(name)) {
-            removeEvent.call(this, name);
-        }
-
-        return this.eventsList;
-    }
-
-    function hasEvent(name) {
-        return typeof this.eventsList[name] === 'object' ? this.eventsList[name] : false;
-    }
-
-    function triggerEvent(name) {
-        var evt = this.hasEvent(name);
-        if (typeof evt.handler === 'function') {
-            return evt.handler();
-        }
-        return false;
-    }
-
-    export function UIEvent(config): void {
-        if (!(this instanceof UIEvent)) {
-            return new UIEvent(config);
-        }
-
-        this.htmlElement = config.htmlElement;
-
-        this.eventConfig = {
-            name: config.name,
-            eventType: config.eventType,
-            handler: config.handler === undefined ? false : config.handler,
-            useCapture: config.useCapture === undefined ? false : config.useCapture,
-            context: config.context === undefined ? null : config.context
-        };
-
-        this.init();
-    }
-
-    UIEvent.prototype.init = function () {
-        if (this.htmlElement.eventsList === undefined) {
-            Object.defineProperties(this.htmlElement, {
-                'eventsList': {
-                    writable: true,
-                    enumerable: false,
-                    configurable: false,
-                    value: {}
-                },
-                'events': {
-                    enumerable: false,
-                    configurable: false,
-                    get: function () {
-                        return this.eventsList;
-                    },
-                    set: function (e) {
-                        return this.eventsList[e.name] = e;
-                    }
-                },
-                'trigger': {
-                    writable: false,
-                    enumerable: false,
-                    configurable: false,
-                    value: triggerEvent
-                },
-                'hasEvent': {
-                    writable: false,
-                    enumerable: false,
-                    configurable: false,
-                    value: hasEvent
-                },
-                'detach': {
-                    writable: false,
-                    enumerable: false,
-                    configurable: false,
-                    value: detachEvent
-                }
-            });
-        }
-        else if (this.htmlElement.hasEvent(this.eventConfig.name)) {
-            return false;
-        }
-
-        this.eventConfig.handler = this.eventConfig.handler.bind(this.eventConfig.context || this);
-        this.htmlElement.addEventListener(this.eventConfig.eventType, this.eventConfig.handler, this.eventConfig.useCapture);
-        this.htmlElement.events = this.eventConfig;
-    };
-
-    Object.defineProperties(UIEvent.prototype, {
-        'detach': {
-            writable: false,
-            enumerable: false,
-            configurable: false,
-            value: function (name) {
-                return detachEvent.call(this.htmlElement, name);
-            }
-        },
-        'trigger': {
-            writable: false,
-            enumerable: false,
-            configurable: false,
-            value: function (name) {
-                return triggerEvent.call(this.htmlElement, name || this.eventConfig.name);
-            }
-        }
-
-    });
-}
 interface MVPView {
-    render(model: any): HTMLElement;
+    root: HTMLElement;
+    render(data?: any): HTMLElement;
     destroy(): void;
 }
 
+interface MVPViewEventListenerConfig {
+    type: string;
+    selector: string;
+    listener: (ev: Event) => void;
+    useCapture?: boolean;
+}
+
+interface Event {
+    delegateTarget: HTMLElement;
+}
+
+// pollyfill
+if (!Element.prototype.matches) {
+    Element.prototype.matches =
+        Element.prototype["matchesSelector"] ||
+        Element.prototype["mozMatchesSelector"] ||
+        Element.prototype["msMatchesSelector"] ||
+        Element.prototype["oMatchesSelector"] ||
+        Element.prototype["webkitMatchesSelector"] ||
+        function (s: string): boolean {
+            let matches = (this.document || this.ownerDocument).querySelectorAll(s);
+            let i = matches.length;
+            while (--i >= 0 && matches.item(i) !== this) {
+                continue;
+            }
+            return i > -1;
+        };
+}
+
 namespace dcore.plugins.mvp {
     "use strict";
 
-    function eventHandler(ev: Event): void {
-        let target = <HTMLElement>ev.target;
-        let dataset = target.dataset;
-        if (!dataset.hasOwnProperty(ev.type)) {
-            return;
+    interface EventListenersMap {
+        [type: string]: EventListenerConfig;
+    }
+
+    let hasOwnProperty = Object.prototype.hasOwnProperty;
+
+    class EventListenerConfig {
+        public type: string;
+        public selector: string;
+        public listener: (ev: Event) => void;
+        public useCapture: boolean;
+        public context: MVPView;
+
+        constructor(
+            type: string,
+            selector: string,
+            listener: (ev: Event) => void,
+            useCapture: boolean,
+            context: MVPView) {
+            this.type = type;
+            this.selector = selector;
+            this.listener = listener;
+            this.useCapture = useCapture;
+            this.context = context;
         }
 
-        let callbackName = dataset[ev.type];
-        if (typeof this[callbackName] === "function") {
-            this[callbackName](ev);
-            return;
+        handleEvent(ev: Event): void {
+            let target = <HTMLElement>ev.target;
+            do {
+                if (!target.matches(this.selector)) {
+                    target = target.parentElement;
+                    continue;
+                }
+
+                ev.delegateTarget = target;
+                this.listener(ev);
+                return;
+            } while (target && target !== this.context.root);
         }
     }
 
     /**
      *  @class dcore.View
-     *  @param {HTMLElement} domNode The view's html element.
-     *  @param {Function} [template] A function which renders view's html element.
      *  @property {HTMLElement} root
-     *  @property {Function} [template]
      */
     export class View implements MVPView {
-        public template: (model: any) => string;
+        private eventListeners: EventListenersMap = {};
         public root: HTMLElement;
 
-        constructor(root: HTMLElement, template?: (model: any) => string) {
-            if (!root) {
-                throw new Error("Root must be an html element.");
-            }
-
+        constructor(root: HTMLElement) {
             this.root = root;
-            this.template = template;
-        }
-
-        /**
-         *  Maps a view action to given ui event disptached from html element.
-         *  Mapping works by using the dataset - e.g data-click="handleClick" maps to handleClick.
-         * @param eventType
-         * @param useCapture
-         * @param selector
-         */
-        map(eventType: string, useCapture: boolean = false, selector?: string): this {
-            UIEvent({
-                name: eventType,
-                htmlElement: !selector ? this.root : this.root.querySelector(selector),
-                handler: eventHandler,
-                eventType: eventType,
-                context: this,
-                useCapture: useCapture
-            });
-
-            return this;
         }
 
         /**
          *  Renders the view.
-         *  @param {any} [model]
          *  @returns {HTMLElement}
          */
-        render(model?: any): HTMLElement {
-            if (typeof this.template === "function") {
-                this.root.innerHTML = this.template.call(this, model);
-            }
-
+        render(data?: any): HTMLElement {
             return this.root;
         }
 
         /**
-         *  Removes all elements and mapped events.
+         *  Adds event listeners to its root element by delegating to given selectors.
+         * @param {Array} configs
+         */
+        addEventListeners(configs: MVPViewEventListenerConfig[]): this {
+            if (Array.isArray(configs)) {
+                configs.forEach(c => this.addEventListener(c));
+            }
+
+            return this;
+        }
+
+        /**
+         *  Adds an event listener to its root element by delegating to given selector.
+         * @param {Object} config
+         */
+        addEventListener(config: MVPViewEventListenerConfig): this {
+            if (typeof config !== "object" || config === null) {
+                throw new TypeError("Listener config must be passed as object.");
+            }
+
+            let eventType = config.type;
+            if (typeof eventType !== "string") {
+                throw new TypeError("Event type must be a string.");
+            }
+
+            let configObj = new EventListenerConfig(
+                eventType,
+                config.selector,
+                config.listener,
+                !!config.useCapture,
+                this
+            );
+
+            let key = `${eventType} ${configObj.selector} ${configObj.useCapture}`;
+            if (hasOwnProperty.call(this.eventListeners, key)) {
+                return this;
+            }
+
+            configObj.handleEvent = configObj.handleEvent.bind(configObj);
+            this.root.addEventListener(eventType, configObj.handleEvent, configObj.useCapture);
+            this.eventListeners[key] = configObj;
+            return this;
+        }
+
+        /**
+         *  Destroys the view.
          */
         destroy(): void {
-            if (typeof this.root.detach === "function") {
-                this.root.detach();
-            }
-            
+            Object
+                .keys(this.eventListeners)
+                .forEach(type => {
+                    let listener = this.eventListeners[type];
+                    this.root.removeEventListener(listener.type, listener.handleEvent, listener.useCapture);
+                    delete this.eventListeners[type];
+                });;
+
+            this.eventListeners = {};
             this.root = null;
-        }
-
-        /**
-         *  Finds an element by given selector.
-         *  @param {String} selector
-         *  @returns {Element}
-         */
-        query(selector: string): Element {
-            return this.root.querySelector(selector);
-        }
-
-        /**
-         *  Removes an element by given selector.
-         *  @param {String} selector
-         */
-        removeElement(selector: string): this {
-            let element = this.query(selector);
-            if (element) {
-                element.parentElement.removeChild(element);
-            }
-
-            return this;
-        }
-
-        /**
-         *  Removes all elements.
-         *  @returns {dcore.View}
-         */
-        removeAllElements(): this {
-            while (this.root.firstElementChild) {
-                this.root.removeChild(this.root.firstElementChild);
-            }
-
-            return this;
         }
     }
 }
@@ -535,25 +426,18 @@ namespace dcore.plugins.mvp {
     /**
      *  @class dcore.Presenter
      */
-    export class Presenter<TView extends MVPView, TModel extends MVPModel> {
-        private _view: TView = null;
+    export class Presenter<TView extends MVPView, TModel> {
         private _model: TModel = null;
+        private _view: TView = null;
         private _modelHandlers: Object = {};
+
+        constructor(view: TView, model: TModel) {
+            this._view = view;
+            this.model = model;
+        }
 
         get view(): TView {
             return this._view;
-        }
-
-        set view(value: TView) {
-            if (this.view === value) {
-                return;
-            }
-
-            if (this.view) {
-                this.view.destroy();
-            }
-
-            this._view = value;
         }
 
         get model(): TModel {
@@ -561,23 +445,26 @@ namespace dcore.plugins.mvp {
         }
 
         set model(model: TModel) {
-            if (this._model === model) {
+            if (this.model === model) {
                 return;
             }
 
-            Object.keys(this._modelHandlers).forEach(type => {
-                let eventHandler = this._modelHandlers[type];
-                if (this._model) {
-                    this._model.off(type, eventHandler, this);
-                }
+            let shouldDetach = this.model instanceof Model;
+            let shouldAttach = model instanceof Model;
+            Object
+                .keys(this._modelHandlers)
+                .forEach(type => {
+                    let eventHandler = this._modelHandlers[type];
+                    if (shouldDetach) {
+                        this.model["off"](type, eventHandler, this);
+                    }
 
-                if (model) {
-                    model.on(type, eventHandler, this);
-                }
-            });
+                    if (shouldAttach) {
+                        model["on"](type, eventHandler, this);
+                    }
+                });
 
             this._model = model;
-            this.render();
         }
 
         /**
@@ -595,22 +482,18 @@ namespace dcore.plugins.mvp {
          *  Renders its view.
          */
         render(): HTMLElement {
-            if (this.view) {
-                return this.view.render(this.model);
-            }
-
-            return null;
+            return this.view.render(this.model);
         }
 
         /**
-         *  Destroys its view and model.
+         *  Destroys its model and view.
          */
         destroy(): void {
-            this.view = null;
             this.model = null;
+            this._view.destroy();
+            this._view = null;
         }
     }
-
 }
 interface DCore {
     useMVP(): void;
