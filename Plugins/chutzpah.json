@@ -25,9 +25,6 @@
       "Path": "src/mvp/Collection.js"
     },
     {
-      "Path": "src/mvp/lib/UIEvent.js"
-    },
-    {
       "Path": "src/mvp/View.js"
     },
     {

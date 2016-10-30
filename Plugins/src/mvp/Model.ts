@@ -27,7 +27,6 @@ namespace dcore.plugins.mvp {
         return <T & MVPModel>target;
     }
 
-
     /**
      *  @class dcore.Model
      */
