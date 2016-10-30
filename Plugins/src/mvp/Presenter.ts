@@ -4,25 +4,18 @@
     /**
      *  @class dcore.Presenter
      */
-    export class Presenter<TView extends MVPView, TModel extends MVPModel> {
-        private _view: TView = null;
+    export class Presenter<TView extends MVPView, TModel> {
         private _model: TModel = null;
+        private _view: TView = null;
         private _modelHandlers: Object = {};
+
+        constructor(view: TView, model: TModel) {
+            this._view = view;
+            this.model = model;
+        }
 
         get view(): TView {
             return this._view;
-        }
-
-        set view(value: TView) {
-            if (this.view === value) {
-                return;
-            }
-
-            if (this.view) {
-                this.view.destroy();
-            }
-
-            this._view = value;
         }
 
         get model(): TModel {
@@ -30,23 +23,26 @@
         }
 
         set model(model: TModel) {
-            if (this._model === model) {
+            if (this.model === model) {
                 return;
             }
 
-            Object.keys(this._modelHandlers).forEach(type => {
-                let eventHandler = this._modelHandlers[type];
-                if (this._model) {
-                    this._model.off(type, eventHandler, this);
-                }
+            let shouldDetach = this.model instanceof Model;
+            let shouldAttach = model instanceof Model;
+            Object
+                .keys(this._modelHandlers)
+                .forEach(type => {
+                    let eventHandler = this._modelHandlers[type];
+                    if (shouldDetach) {
+                        this.model["off"](type, eventHandler, this);
+                    }
 
-                if (model) {
-                    model.on(type, eventHandler, this);
-                }
-            });
+                    if (shouldAttach) {
+                        model["on"](type, eventHandler, this);
+                    }
+                });
 
             this._model = model;
-            this.render();
         }
 
         /**
@@ -64,20 +60,16 @@
          *  Renders its view.
          */
         render(): HTMLElement {
-            if (this.view) {
-                return this.view.render(this.model);
-            }
-
-            return null;
+            return this.view.render(this.model);
         }
 
         /**
-         *  Destroys its view and model.
+         *  Destroys its model and view.
          */
         destroy(): void {
-            this.view = null;
             this.model = null;
+            this._view.destroy();
+            this._view = null;
         }
     }
-
 }
