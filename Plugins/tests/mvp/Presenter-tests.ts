@@ -15,10 +15,7 @@ describe("Presenter", () => {
     class BookPresenter extends core.mvp.Presenter<MVPView, Book> {
         calledContext: any;
         constructor() {
-            super(
-                new core.mvp.View(document.createElement("div")),
-                new Book()
-            );
+            super(new core.mvp.View(document.createElement("div")));
         }
 
         onBookChanged(book: Book): void {
@@ -26,17 +23,13 @@ describe("Presenter", () => {
         }
     }
 
-    function getPresenter(): BookPresenter {
-        return new BookPresenter();
-    }
-
     it("should map to model when a new one is set", () => {
-        let presenter = getPresenter();
+        let book = new Book();
+        let presenter = new BookPresenter();
         spyOn(presenter, "onBookChanged").and.callThrough();
         presenter.onModel(core.mvp.ModelEvents.Change, presenter.onBookChanged);
-
-        let book = new Book();
         presenter.model = book;
+
         book.change();
 
         expect(presenter.onBookChanged).toHaveBeenCalledWith(book);
@@ -44,8 +37,10 @@ describe("Presenter", () => {
     });
 
     it("should not replace its model when the same is set", () => {
-        let presenter = getPresenter();
-        let book = presenter.model;
+        let book = new Book();
+        let presenter = new BookPresenter();
+        presenter.onModel(core.mvp.ModelEvents.Change, presenter.onBookChanged);
+        presenter.model = book;
         spyOn(book, "off");
 
         presenter.model = book;
@@ -54,9 +49,10 @@ describe("Presenter", () => {
     });
 
     it("should remove mapping from its model when a new one is set", () => {
-        let presenter = getPresenter();
+        let book = new Book();
+        let presenter = new BookPresenter();
         presenter.onModel(core.mvp.ModelEvents.Change, presenter.onBookChanged);
-        let book = presenter.model;
+        presenter.model = book;
         spyOn(presenter, "onBookChanged");
         spyOn(book, "off");
 
@@ -68,7 +64,7 @@ describe("Presenter", () => {
     });
 
     it("should return view's dom node when render", () => {
-        let presenter = getPresenter();
+        let presenter = new BookPresenter();
         spyOn(presenter, "render").and.callThrough();
 
         let result = presenter.render();
@@ -77,7 +73,8 @@ describe("Presenter", () => {
     });
 
     it("should reset its model and view when destroy", () => {
-        let presenter = getPresenter();
+        let presenter = new BookPresenter();
+        presenter.model = new Book();
         spyOn(presenter.view, "destroy");
 
         presenter.destroy();

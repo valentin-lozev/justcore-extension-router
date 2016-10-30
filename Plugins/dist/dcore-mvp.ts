@@ -431,9 +431,8 @@ namespace dcore.plugins.mvp {
         private _view: TView = null;
         private _modelHandlers: Object = {};
 
-        constructor(view: TView, model: TModel) {
+        constructor(view: TView) {
             this._view = view;
-            this.model = model;
         }
 
         get view(): TView {

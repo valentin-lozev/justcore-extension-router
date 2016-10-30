@@ -369,12 +369,11 @@ var dcore;
              *  @class dcore.Presenter
              */
             var Presenter = (function () {
-                function Presenter(view, model) {
+                function Presenter(view) {
                     this._model = null;
                     this._view = null;
                     this._modelHandlers = {};
                     this._view = view;
-                    this.model = model;
                 }
                 Object.defineProperty(Presenter.prototype, "view", {
                     get: function () {
