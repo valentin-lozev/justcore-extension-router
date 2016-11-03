@@ -280,7 +280,7 @@ var dcore;
                             continue;
                         }
                         ev.delegateTarget = target;
-                        this.listener(ev);
+                        this.listener.call(this.context, ev);
                         return;
                     } while (target && target !== this.context.root);
                 };

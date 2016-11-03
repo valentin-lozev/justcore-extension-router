@@ -7,6 +7,7 @@ describe("View", () => {
     core.useMVP();
 
     class TestView extends core.mvp.View {
+
         constructor() {
             super(document.createElement("div"));
         }
@@ -21,7 +22,7 @@ describe("View", () => {
         }
 
         handleClick(ev: Event): void {
-            return;
+            ev["handler_context"] = this;
         }
     }
 
@@ -45,6 +46,22 @@ describe("View", () => {
 
         expect(view.handleClick).toHaveBeenCalledWith(ev);
         expect(ev.delegateTarget).toBe(view.root);
+    });
+
+    it("should handle added event listener with correct context", () => {
+        let view = new TestView();
+        spyOn(view, "handleClick").and.callThrough();
+        view.addEventListener({
+            type: "click",
+            selector: "div",
+            listener: view.handleClick
+        });
+
+        let ev = new Event("click");
+        view.root.dispatchEvent(ev);
+
+        expect(view.handleClick).toHaveBeenCalledWith(ev);
+        expect(ev["handler_context"]).toBe(view);
     });
 
     it("should handle added event listener in capturing phase", () => {
