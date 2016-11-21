@@ -119,18 +119,6 @@ describe("RouteConfig", () => {
         expect(handler.handle).toHaveBeenCalledWith({ id: "1" });
     });
 
-    it("should start the current hash route on DOMContentLoaded", () => {
-        let core = dcore.createOne();
-        core.useRouting();
-        core.routing.register("", () => { return; });
-        spyOn(core.routing, "startRoute");
-
-        core.run();
-        document.dispatchEvent(new Event("DOMContentLoaded"));
-
-        expect(core.routing.startRoute).toHaveBeenCalled();
-    });
-
     it("should start listening for hashchange on DOMContentLoaded", () => {
         let core = dcore.createOne();
         core.useRouting();
@@ -141,6 +129,6 @@ describe("RouteConfig", () => {
         document.dispatchEvent(new Event("DOMContentLoaded"));
         window.dispatchEvent(new Event("hashchange"));
 
-        expect(core.routing.startRoute).toHaveBeenCalledTimes(2);
+        expect(core.routing.startRoute).toHaveBeenCalledTimes(1);
     });
 });

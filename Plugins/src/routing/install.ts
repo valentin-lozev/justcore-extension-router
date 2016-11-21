@@ -26,7 +26,6 @@ namespace dcore {
             }
 
             let global = window;
-            that.routing.startRoute(global.location.hash.substring(1));
             global.addEventListener("hashchange", () => {
                 that.routing.startRoute(global.location.hash.substring(1));
             });

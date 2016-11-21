@@ -273,7 +273,6 @@ var dcore;
                 return;
             }
             var global = window;
-            that.routing.startRoute(global.location.hash.substring(1));
             global.addEventListener("hashchange", function () {
                 that.routing.startRoute(global.location.hash.substring(1));
             });
