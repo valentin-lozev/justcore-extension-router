@@ -17,6 +17,7 @@
         private callback: (routeParams: any) => void;
         private tokens: RouteToken[] = [];
         public pattern: string;
+        public queryParams: Object;
 
         constructor(pattern: string, onStart: (routeParams: any) => void) {
             let errorMsg = "Route registration failed:";
@@ -68,9 +69,14 @@
          *  and executes the registered callback.
          */
         start(urlHash: UrlHash): void {
-            let queryParams = this.getParamsFromUrl(urlHash);
+            this.queryParams = Object.freeze(this.getParamsFromUrl(urlHash));
             if (this.callback) {
-                this.callback(queryParams);
+                try {
+                    this.callback(this.queryParams);
+                } catch (error) {
+                    console.error(`Couldn't start ${urlHash.value} route due to:`);
+                    console.error(error);
+                }
             }
         }
 

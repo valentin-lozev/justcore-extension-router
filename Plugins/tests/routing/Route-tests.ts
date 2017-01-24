@@ -137,6 +137,24 @@ describe("Route", () => {
         expect(callback.run).toHaveBeenCalledWith({ ID: "123", Page: "1" });
     });
 
+    it("should parse query params", () => {
+        let callback = {
+            run: (routeParams: any): void => { return; }
+        };
+        spyOn(callback, "run");
+        let route = getRoute("/books", callback.run);
+        let expected = {
+            search: "asd",
+            filter: "true"
+        };
+
+        route.start(getHash("/books?search=asd&filter=true"));
+        let params = route.queryParams;
+
+        expect(params).toEqual(expected);
+        expect(callback.run).toHaveBeenCalledWith(expected);
+    });
+
     it("should execute callback when having dynamic params and query params", () => {
         let callback = {
             run: (routeParams: any): void => { return; }

@@ -3,7 +3,7 @@
 
 describe("RouteConfig", () => {
 
-    function getConfig(): DRoutingPlugin {
+    function getConfig(): dcore.plugins.routing.RouteConfig {
         let core = dcore.createOne();
         core.useRouting();
         return core.routing;
@@ -78,9 +78,12 @@ describe("RouteConfig", () => {
         spyOn(handler, "handle");
         config.register(pattern, handler.handle);
 
-        config.startRoute(pattern);
+        config.startRoute(pattern + "?search=");
+        let currentRoute = config.getCurrentRoute();
 
         expect(handler.handle).toHaveBeenCalled();
+        expect(currentRoute.pattern).toEqual(pattern);
+        expect(currentRoute.params).toEqual({ search: "" });
     });
 
     it("should start default url when start not registered route", () => {
@@ -96,7 +99,9 @@ describe("RouteConfig", () => {
         config.register(pattern, handler.handle);
 
         config.startRoute("invalid");
+        let currentRoute = config.getCurrentRoute();
 
+        expect(currentRoute.pattern).toEqual(pattern);
         expect(handler.handle).toHaveBeenCalled();
     });
 

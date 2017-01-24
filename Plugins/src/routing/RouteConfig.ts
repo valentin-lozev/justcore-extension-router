@@ -1,12 +1,4 @@
-﻿interface DRoutingPlugin {
-    defaultUrl: string;
-    register(pattern: string, callback: (routeParams: any) => void): this;
-    startRoute(hash: string): void;
-    getRoutes(): string[];
-    hasRoutes(): boolean;
-}
-
-namespace dcore.plugins.routing {
+﻿namespace dcore.plugins.routing {
     "use strict";
 
     function findRoute(): Route {
@@ -28,9 +20,9 @@ namespace dcore.plugins.routing {
         );
 
         this.urlHash.value = this.defaultUrl;
-        let nextRoute = findRoute.call(this);
-        if (nextRoute) {
-            nextRoute.start(this.urlHash);
+        this.currentRoute = findRoute.call(this);
+        if (this.currentRoute) {
+            this.currentRoute.start(this.urlHash);
         } else {
             console.warn("No route handler for " + invalidHash);
         }
@@ -39,9 +31,11 @@ namespace dcore.plugins.routing {
     /**
      *  @class RouteConfig - Handles window hash change.
      */
-    export class RouteConfig implements DRoutingPlugin {
+    export class RouteConfig {
         private routes: Route[] = [];
         private urlHash: UrlHash = new UrlHash();
+        private currentRoute: Route;
+
         public defaultUrl: string = null;
 
         /**
@@ -63,9 +57,9 @@ namespace dcore.plugins.routing {
          */
         startRoute(hash: string): void {
             this.urlHash.value = hash;
-            let nextRoute = findRoute.call(this);
-            if (nextRoute) {
-                nextRoute.start(this.urlHash);
+            this.currentRoute = findRoute.call(this);
+            if (this.currentRoute) {
+                this.currentRoute.start(this.urlHash);
                 return;
             }
 
@@ -74,6 +68,13 @@ namespace dcore.plugins.routing {
             } else {
                 console.warn("No route matches " + hash);
             }
+        }
+
+        getCurrentRoute(): RouteState {
+            return {
+                pattern: this.currentRoute.pattern,
+                params: this.currentRoute.queryParams
+            };
         }
 
         /**
@@ -89,5 +90,10 @@ namespace dcore.plugins.routing {
         hasRoutes(): boolean {
             return this.routes.length > 0;
         }
+    }
+
+    interface RouteState {
+        pattern: string;
+        params: any;
     }
 }

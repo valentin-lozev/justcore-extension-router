@@ -1,6 +1,6 @@
 ﻿interface DCore {
     useRouting(): void;
-    routing: DRoutingPlugin;
+    routing: dcore.plugins.routing.RouteConfig;
 }
 
 namespace dcore {
@@ -8,9 +8,15 @@ namespace dcore {
 
     import routing = plugins.routing;
 
+    let global = window;
+
     export interface Instance {
         useRouting(): void;
-        routing: DRoutingPlugin;
+        routing: routing.RouteConfig;
+    }
+
+    function handleRoute() {
+        this.routing.startRoute(global.location.hash.substring(1));
     }
 
     Instance.prototype.useRouting = function (): void {
@@ -25,10 +31,7 @@ namespace dcore {
                 return;
             }
 
-            let global = window;
-            global.addEventListener("hashchange", () => {
-                that.routing.startRoute(global.location.hash.substring(1));
-            });
+            global.addEventListener("hashchange", handleRoute.bind(that));
         });
     };
 }
