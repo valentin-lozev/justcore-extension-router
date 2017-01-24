@@ -26,11 +26,11 @@ gulp.task('scripts', function () {
     return es.merge(
         // mvp
         gulp.src(mvpFiles.map(file => file + '.ts'))
-            .pipe(concat('dcore-mvp.ts'))
+            .pipe(concat('dcore-mvp-1.0.0.ts'))
             .pipe(gulp.dest('dist')),
 
         gulp.src(mvpFiles.map(file => file + '.js'))
-        .pipe(concat('dcore-mvp.js'))
+        .pipe(concat('dcore-mvp-1.0.0.js'))
         .pipe(minify({
             ext: { min: '.min.js' },
             mangle: false,
@@ -40,11 +40,11 @@ gulp.task('scripts', function () {
 
         // routing
         gulp.src(routingFiles.map(file => file + '.ts'))
-            .pipe(concat('dcore-routing.ts'))
+            .pipe(concat('dcore-routing-1.0.1.ts'))
             .pipe(gulp.dest('dist')),
 
         gulp.src(routingFiles.map(file => file + '.js'))
-        .pipe(concat('dcore-routing.js'))
+        .pipe(concat('dcore-routing-1.0.1.js'))
         .pipe(minify({
             ext: { min: '.min.js' },
             mangle: false,
@@ -54,11 +54,11 @@ gulp.task('scripts', function () {
 
         // services
         gulp.src(servicesFiles.map(file => file + '.ts'))
-            .pipe(concat('dcore-services.ts'))
+            .pipe(concat('dcore-services-1.0.0.ts'))
             .pipe(gulp.dest('dist')),
 
         gulp.src(servicesFiles.map(file => file + '.js'))
-        .pipe(concat('dcore-services.js'))
+        .pipe(concat('dcore-services-1.0.0.js'))
         .pipe(minify({
             ext: { min: '.min.js' },
             mangle: false,
