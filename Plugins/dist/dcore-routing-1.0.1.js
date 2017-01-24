@@ -275,6 +275,12 @@ var dcore;
     "use strict";
     var routing = dcore.plugins.routing;
     var global = window;
+    function sandboxGetCurrentRoute() {
+        return this.core.routing.getCurrentRoute();
+    }
+    function sandboxGo(url) {
+        this.core.routing.startRoute(url);
+    }
     function handleRoute() {
         this.routing.startRoute(global.location.hash.substring(1));
     }
@@ -284,6 +290,8 @@ var dcore;
             return;
         }
         that.routing = new routing.RouteConfig();
+        that.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
+        that.Sandbox.prototype.go = sandboxGo;
         that.hook(dcore.HookType.Core_DOMReady, function () {
             if (!that.routing.hasRoutes()) {
                 return;

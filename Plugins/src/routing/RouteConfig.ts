@@ -70,7 +70,7 @@
             }
         }
 
-        getCurrentRoute(): RouteState {
+        getCurrentRoute(): DRouteState {
             return {
                 pattern: this.currentRoute.pattern,
                 params: this.currentRoute.queryParams
@@ -91,9 +91,9 @@
             return this.routes.length > 0;
         }
     }
+}
 
-    interface RouteState {
-        pattern: string;
-        params: any;
-    }
+interface DRouteState {
+    pattern: string;
+    params: any;
 }

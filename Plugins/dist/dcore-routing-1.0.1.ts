@@ -262,7 +262,7 @@ namespace dcore.plugins.routing {
             }
         }
 
-        getCurrentRoute(): RouteState {
+        getCurrentRoute(): DRouteState {
             return {
                 pattern: this.currentRoute.pattern,
                 params: this.currentRoute.queryParams
@@ -283,15 +283,20 @@ namespace dcore.plugins.routing {
             return this.routes.length > 0;
         }
     }
+}
 
-    interface RouteState {
-        pattern: string;
-        params: any;
-    }
+interface DRouteState {
+    pattern: string;
+    params: any;
 }
 interface DCore {
     useRouting(): void;
     routing: dcore.plugins.routing.RouteConfig;
+}
+
+interface DSandbox {
+    getCurrentRoute(): DRouteState;
+    go(url: string): void;
 }
 
 namespace dcore {
@@ -306,6 +311,19 @@ namespace dcore {
         routing: routing.RouteConfig;
     }
 
+    export interface DefaultSandbox {
+        getCurrentRoute(): DRouteState;
+        go(url: string): void;
+    }
+
+    function sandboxGetCurrentRoute() {
+        return this.core.routing.getCurrentRoute();
+    }
+
+    function sandboxGo(url: string) {
+        this.core.routing.startRoute(url);
+    }
+
     function handleRoute() {
         this.routing.startRoute(global.location.hash.substring(1));
     }
@@ -317,6 +335,9 @@ namespace dcore {
         }
 
         that.routing = new routing.RouteConfig();
+        that.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
+        that.Sandbox.prototype.go = sandboxGo;
+
         that.hook(dcore.HookType.Core_DOMReady, () => {
             if (!that.routing.hasRoutes()) {
                 return;

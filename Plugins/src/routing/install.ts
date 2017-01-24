@@ -3,6 +3,11 @@
     routing: dcore.plugins.routing.RouteConfig;
 }
 
+interface DSandbox {
+    getCurrentRoute(): DRouteState;
+    go(url: string): void;
+}
+
 namespace dcore {
     "use strict";
 
@@ -13,6 +18,19 @@ namespace dcore {
     export interface Instance {
         useRouting(): void;
         routing: routing.RouteConfig;
+    }
+
+    export interface DefaultSandbox {
+        getCurrentRoute(): DRouteState;
+        go(url: string): void;
+    }
+
+    function sandboxGetCurrentRoute() {
+        return this.core.routing.getCurrentRoute();
+    }
+
+    function sandboxGo(url: string) {
+        this.core.routing.startRoute(url);
     }
 
     function handleRoute() {
@@ -26,6 +44,9 @@ namespace dcore {
         }
 
         that.routing = new routing.RouteConfig();
+        that.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
+        that.Sandbox.prototype.go = sandboxGo;
+
         that.hook(dcore.HookType.Core_DOMReady, () => {
             if (!that.routing.hasRoutes()) {
                 return;
