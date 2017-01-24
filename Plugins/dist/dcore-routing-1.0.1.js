@@ -279,7 +279,7 @@ var dcore;
         return this.core.routing.getCurrentRoute();
     }
     function sandboxGo(url) {
-        this.core.routing.startRoute(url);
+        location.hash = url;
     }
     function handleRoute() {
         this.routing.startRoute(global.location.hash.substring(1));

@@ -30,7 +30,7 @@ namespace dcore {
     }
 
     function sandboxGo(url: string) {
-        this.core.routing.startRoute(url);
+        location.hash = url;
     }
 
     function handleRoute() {
