@@ -80,19 +80,19 @@ namespace dcore.plugins.routing {
     }
 
     let routeParamRegex = /{([a-zA-Z]+)}/; // e.g {id}
-
+    
     /**
      *  @class Route - Accepts a pattern and split it by / (slash).
      *  It also supports dynamic params - {yourDynamicParam}.
      *  @property {String} pattern
      */
     export class Route {
-        private callback: (routeParams: any) => void;
+        private callback: (routeParams: any, currentPattern?: string) => void;
         private tokens: RouteToken[] = [];
         public pattern: string;
         public queryParams: Object;
 
-        constructor(pattern: string, onStart: (routeParams: any) => void) {
+        constructor(pattern: string, onStart: (routeParams: any, currentPattern?: string) => void) {
             let errorMsg = "Route registration failed:";
             if (typeof pattern !== "string") {
                 throw new TypeError(`${errorMsg} pattern should be non empty string.`);
@@ -145,7 +145,7 @@ namespace dcore.plugins.routing {
             this.queryParams = Object.freeze(this.getParamsFromUrl(urlHash));
             if (this.callback) {
                 try {
-                    this.callback(this.queryParams);
+                    this.callback(this.queryParams, this.pattern);
                 } catch (error) {
                     console.error(`Couldn't start ${urlHash.value} route due to:`);
                     console.error(error);
@@ -235,7 +235,7 @@ namespace dcore.plugins.routing {
          *  When url's hash is changed it executes a callback with populated dynamic routes and query parameters.
          *  Dynamic route param can be registered with {yourParam}.
          */
-        register(pattern: string, callback: (routeParams: any) => void): this {
+        register(pattern: string, callback: (routeParams: any, currentPattern?: string) => void): this {
             if (this.routes.some(r => r.pattern === pattern)) {
                 throw new Error("Route " + pattern + " has been already registered.");
             }

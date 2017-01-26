@@ -133,7 +133,7 @@ var dcore;
                     this.queryParams = Object.freeze(this.getParamsFromUrl(urlHash));
                     if (this.callback) {
                         try {
-                            this.callback(this.queryParams);
+                            this.callback(this.queryParams, this.pattern);
                         }
                         catch (error) {
                             console.error("Couldn't start " + urlHash.value + " route due to:");
