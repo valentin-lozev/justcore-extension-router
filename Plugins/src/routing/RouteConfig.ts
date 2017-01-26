@@ -72,8 +72,8 @@
 
         getCurrentRoute(): DRouteState {
             return {
-                pattern: this.currentRoute.pattern,
-                params: this.currentRoute.queryParams
+                pattern: this.currentRoute ? this.currentRoute.pattern : null,
+                params: this.currentRoute ? this.currentRoute.queryParams: null
             };
         }
 
