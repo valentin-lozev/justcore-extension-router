@@ -223,7 +223,7 @@ var dcore;
                  */
                 RouteConfig.prototype.register = function (pattern, callback) {
                     if (this.routes.some(function (r) { return r.pattern === pattern; })) {
-                        throw new Error("Route " + pattern + " has been already registered.");
+                        throw new Error("register(): Route " + pattern + " has been already registered.");
                     }
                     this.routes.push(new routing.Route(pattern, callback));
                     return this;
@@ -285,19 +285,19 @@ var dcore;
         this.routing.startRoute(global.location.hash.substring(1));
     }
     dcore.Instance.prototype.useRouting = function () {
-        var that = this;
-        if (that.routing) {
-            return;
+        var _this = this;
+        if (this.routing) {
+            return this;
         }
-        that.routing = new routing.RouteConfig();
-        that.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
-        that.Sandbox.prototype.go = sandboxGo;
-        that.hook(dcore.HookType.Core_DOMReady, function () {
-            if (!that.routing.hasRoutes()) {
-                return;
+        this.routing = new routing.RouteConfig();
+        this.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
+        this.Sandbox.prototype.go = sandboxGo;
+        this.hook(dcore.HookType.Core_DOMReady, function () {
+            if (_this.routing.hasRoutes()) {
+                global.addEventListener("hashchange", handleRoute.bind(_this));
             }
-            global.addEventListener("hashchange", handleRoute.bind(that));
         });
+        return this;
     };
 })(dcore || (dcore = {}));
 //# sourceMappingURL=install.js.map

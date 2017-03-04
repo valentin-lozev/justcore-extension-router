@@ -1,5 +1,5 @@
 ﻿interface DCore {
-    useRouting(): void;
+    useRouting(): DCore;
     routing: dcore.plugins.routing.RouteConfig;
 }
 
@@ -16,7 +16,7 @@ namespace dcore {
     let global = window;
 
     export interface Instance {
-        useRouting(): void;
+        useRouting(): DCore;
         routing: routing.RouteConfig;
     }
 
@@ -37,22 +37,20 @@ namespace dcore {
         this.routing.startRoute(global.location.hash.substring(1));
     }
 
-    Instance.prototype.useRouting = function (): void {
-        let that = <DCore>this;
-        if (that.routing) {
-            return;
+    Instance.prototype.useRouting = function (this: DCore): DCore {
+        if (this.routing) {
+            return this;
         }
 
-        that.routing = new routing.RouteConfig();
-        that.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
-        that.Sandbox.prototype.go = sandboxGo;
+        this.routing = new routing.RouteConfig();
+        this.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
+        this.Sandbox.prototype.go = sandboxGo;
 
-        that.hook(dcore.HookType.Core_DOMReady, () => {
-            if (!that.routing.hasRoutes()) {
-                return;
+        this.hook(dcore.HookType.Core_DOMReady, () => {
+            if (this.routing.hasRoutes()) {
+                global.addEventListener("hashchange", handleRoute.bind(this));
             }
-
-            global.addEventListener("hashchange", handleRoute.bind(that));
         });
+        return this;
     };
 }

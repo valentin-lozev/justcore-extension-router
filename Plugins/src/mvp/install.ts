@@ -1,5 +1,5 @@
 ﻿interface DCore {
-    useMVP(): void;
+    useMVP(): DCore;
     mvp: MVPPlugin;
 }
 
@@ -30,7 +30,7 @@ namespace dcore {
     import mvp = plugins.mvp;
 
     export interface Instance {
-        useMVP(): void;
+        useMVP(): DCore;
         mvp: MVPPlugin;
     }
 
@@ -38,13 +38,13 @@ namespace dcore {
         asMVPModel<T>(target: T): T & MVPModel;
     }
 
-    Instance.prototype.useMVP = function (): void {
-        let that = <DCore>this;
-        if (that.mvp) {
-            return;
+    Instance.prototype.useMVP = function (this: DCore): DCore {
+        if (this.mvp) {
+            console.warn("MVP plugin has been already installed");
+            return this;
         }
 
-        that.mvp = {
+        this.mvp = {
             Model: mvp.Model,
             asMVPModel: mvp.asModel,
             ModelEvents: mvp.ModelEvents,
@@ -53,6 +53,7 @@ namespace dcore {
             View: mvp.View,
             Presenter: mvp.Presenter,
         };
-        that.Sandbox.prototype.asMVPModel = mvp.asModel;
+        this.Sandbox.prototype.asMVPModel = mvp.asModel;
+        return this;
     };
 }

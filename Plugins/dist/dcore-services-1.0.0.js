@@ -51,19 +51,20 @@ var dcore;
     "use strict";
     var services = dcore.plugins.services;
     dcore.Instance.prototype.useServices = function () {
-        var that = this;
-        if (that.services) {
-            return;
+        if (this.services) {
+            console.warn("Services plugin already installed");
+            return this;
         }
-        that.services = new services.ServiceConfig();
+        this.services = new services.ServiceConfig();
         /**
          *  Gets a specific service instance by id.
          *  @param {String} id
          *  @returns {*}
          */
-        that.Sandbox.prototype.getService = function (id) {
+        this.Sandbox.prototype.getService = function (id) {
             return this.core.services.get(id);
         };
+        return this;
     };
 })(dcore || (dcore = {}));
 //# sourceMappingURL=install.js.map

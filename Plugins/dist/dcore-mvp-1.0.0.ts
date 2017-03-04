@@ -376,12 +376,12 @@ namespace dcore.plugins.mvp {
          */
         addEventListener(config: MVPViewEventListenerConfig): this {
             if (typeof config !== "object" || config === null) {
-                throw new TypeError("Listener config must be passed as object.");
+                throw new TypeError("addEventListener(): Listener config must be passed as object.");
             }
 
             let eventType = config.type;
             if (typeof eventType !== "string") {
-                throw new TypeError("Event type must be a string.");
+                throw new TypeError("addEventListener(): Event type must be a string.");
             }
 
             let configObj = new EventListenerConfig(
@@ -495,7 +495,7 @@ namespace dcore.plugins.mvp {
     }
 }
 interface DCore {
-    useMVP(): void;
+    useMVP(): DCore;
     mvp: MVPPlugin;
 }
 
@@ -526,7 +526,7 @@ namespace dcore {
     import mvp = plugins.mvp;
 
     export interface Instance {
-        useMVP(): void;
+        useMVP(): DCore;
         mvp: MVPPlugin;
     }
 
@@ -534,13 +534,13 @@ namespace dcore {
         asMVPModel<T>(target: T): T & MVPModel;
     }
 
-    Instance.prototype.useMVP = function (): void {
-        let that = <DCore>this;
-        if (that.mvp) {
-            return;
+    Instance.prototype.useMVP = function (this: DCore): DCore {
+        if (this.mvp) {
+            console.warn("MVP plugin has been already installed");
+            return this;
         }
 
-        that.mvp = {
+        this.mvp = {
             Model: mvp.Model,
             asMVPModel: mvp.asModel,
             ModelEvents: mvp.ModelEvents,
@@ -549,6 +549,7 @@ namespace dcore {
             View: mvp.View,
             Presenter: mvp.Presenter,
         };
-        that.Sandbox.prototype.asMVPModel = mvp.asModel;
+        this.Sandbox.prototype.asMVPModel = mvp.asModel;
+        return this;
     };
 }

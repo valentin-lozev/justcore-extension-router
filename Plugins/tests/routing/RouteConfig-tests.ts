@@ -113,15 +113,16 @@ describe("RouteConfig", () => {
             }
         };
         spyOn(handler, "handle");
-
-        config.register("{id}", handler.handle);
+        let expectedPattern = "{id}";
+        let expectedParams = { id: "1" };
+        config.register(expectedPattern, handler.handle);
         config.register("page", handler.handle);
         config.register("home", handler.handle);
 
         config.startRoute("1");
 
         expect(handler.handle).toHaveBeenCalledTimes(1);
-        expect(handler.handle).toHaveBeenCalledWith({ id: "1" });
+        expect(handler.handle).toHaveBeenCalledWith(expectedParams, expectedPattern);
     });
 
     it("should start listening for hashchange on DOMContentLoaded", () => {

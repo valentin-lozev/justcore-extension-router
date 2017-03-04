@@ -106,11 +106,12 @@ describe("Route", () => {
             run: (routeParams: any): void => { return; }
         };
         spyOn(callback, "run");
-        let route = getRoute("/books", callback.run);
+        let pattern = "/books";
+        let route = getRoute(pattern, callback.run);
 
         route.start(getHash("/books"));
 
-        expect(callback.run).toHaveBeenCalledWith({});
+        expect(callback.run).toHaveBeenCalledWith({}, pattern);
     });
 
     it("should execute callback when having dynamic params", () => {
@@ -118,11 +119,12 @@ describe("Route", () => {
             run: (routeParams: any): void => { return; }
         };
         spyOn(callback, "run");
-        let route = getRoute("/books/{id}/{page}", callback.run);
+        let pattern = "/books/{id}/{page}";
+        let route = getRoute(pattern, callback.run);
 
         route.start(getHash("/books/123/1"));
 
-        expect(callback.run).toHaveBeenCalledWith({ id: "123", page: "1" });
+        expect(callback.run).toHaveBeenCalledWith({ id: "123", page: "1" }, pattern);
     });
 
     it("should parse dynamic params case sensitive", () => {
@@ -130,11 +132,12 @@ describe("Route", () => {
             run: (routeParams: any): void => { return; }
         };
         spyOn(callback, "run");
-        let route = getRoute("/books/{ID}/{Page}", callback.run);
+        let pattern = "/books/{ID}/{Page}";
+        let route = getRoute(pattern, callback.run);
 
         route.start(getHash("/books/123/1"));
 
-        expect(callback.run).toHaveBeenCalledWith({ ID: "123", Page: "1" });
+        expect(callback.run).toHaveBeenCalledWith({ ID: "123", Page: "1" }, pattern);
     });
 
     it("should parse query params", () => {
@@ -142,7 +145,8 @@ describe("Route", () => {
             run: (routeParams: any): void => { return; }
         };
         spyOn(callback, "run");
-        let route = getRoute("/books", callback.run);
+        let pattern = "/books";
+        let route = getRoute(pattern, callback.run);
         let expected = {
             search: "asd",
             filter: "true"
@@ -152,7 +156,7 @@ describe("Route", () => {
         let params = route.queryParams;
 
         expect(params).toEqual(expected);
-        expect(callback.run).toHaveBeenCalledWith(expected);
+        expect(callback.run).toHaveBeenCalledWith(expected, pattern);
     });
 
     it("should execute callback when having dynamic params and query params", () => {
@@ -160,7 +164,8 @@ describe("Route", () => {
             run: (routeParams: any): void => { return; }
         };
         spyOn(callback, "run");
-        let route = getRoute("/books/{id}/{page}", callback.run);
+        let pattern = "/books/{id}/{page}";
+        let route = getRoute(pattern, callback.run);
 
         route.start(getHash("/books/123/1?search=asd&filter=true"));
 
@@ -169,7 +174,7 @@ describe("Route", () => {
             page: "1",
             search: "asd",
             filter: "true"
-        });
+        }, pattern);
     });
 
     it("should parse dynamic parse with higher priority than query params", () => {
@@ -177,13 +182,14 @@ describe("Route", () => {
             run: (routeParams: any): void => { return; }
         };
         spyOn(callback, "run");
-        let route = getRoute("/books/{id}/{page}", callback.run);
+        let pattern = "/books/{id}/{page}";
+        let route = getRoute(pattern, callback.run);
 
         route.start(getHash("/books/123/100?id=0&page=0"));
 
         expect(callback.run).toHaveBeenCalledWith({
             id: "123",
             page: "100"
-        });
+        }, pattern);
     });
 });

@@ -115,12 +115,12 @@ namespace dcore.plugins.mvp {
          */
         addEventListener(config: MVPViewEventListenerConfig): this {
             if (typeof config !== "object" || config === null) {
-                throw new TypeError("Listener config must be passed as object.");
+                throw new TypeError("addEventListener(): Listener config must be passed as object.");
             }
 
             let eventType = config.type;
             if (typeof eventType !== "string") {
-                throw new TypeError("Event type must be a string.");
+                throw new TypeError("addEventListener(): Event type must be a string.");
             }
 
             let configObj = new EventListenerConfig(

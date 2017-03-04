@@ -7,19 +7,19 @@
     }
 
     let routeParamRegex = /{([a-zA-Z]+)}/; // e.g {id}
-
+    
     /**
      *  @class Route - Accepts a pattern and split it by / (slash).
      *  It also supports dynamic params - {yourDynamicParam}.
      *  @property {String} pattern
      */
     export class Route {
-        private callback: (routeParams: any) => void;
+        private callback: (routeParams: any, currentPattern?: string) => void;
         private tokens: RouteToken[] = [];
         public pattern: string;
         public queryParams: Object;
 
-        constructor(pattern: string, onStart: (routeParams: any) => void) {
+        constructor(pattern: string, onStart: (routeParams: any, currentPattern?: string) => void) {
             let errorMsg = "Route registration failed:";
             if (typeof pattern !== "string") {
                 throw new TypeError(`${errorMsg} pattern should be non empty string.`);
@@ -72,7 +72,7 @@
             this.queryParams = Object.freeze(this.getParamsFromUrl(urlHash));
             if (this.callback) {
                 try {
-                    this.callback(this.queryParams);
+                    this.callback(this.queryParams, this.pattern);
                 } catch (error) {
                     console.error(`Couldn't start ${urlHash.value} route due to:`);
                     console.error(error);

@@ -43,9 +43,9 @@
          *  When url's hash is changed it executes a callback with populated dynamic routes and query parameters.
          *  Dynamic route param can be registered with {yourParam}.
          */
-        register(pattern: string, callback: (routeParams: any) => void): this {
+        register(pattern: string, callback: (routeParams: any, currentPattern?: string) => void): this {
             if (this.routes.some(r => r.pattern === pattern)) {
-                throw new Error("Route " + pattern + " has been already registered.");
+                throw new Error("register(): Route " + pattern + " has been already registered.");
             }
 
             this.routes.push(new Route(pattern, callback));

@@ -319,11 +319,11 @@ var dcore;
                  */
                 View.prototype.addEventListener = function (config) {
                     if (typeof config !== "object" || config === null) {
-                        throw new TypeError("Listener config must be passed as object.");
+                        throw new TypeError("addEventListener(): Listener config must be passed as object.");
                     }
                     var eventType = config.type;
                     if (typeof eventType !== "string") {
-                        throw new TypeError("Event type must be a string.");
+                        throw new TypeError("addEventListener(): Event type must be a string.");
                     }
                     var configObj = new EventListenerConfig(eventType, config.selector, config.listener, !!config.useCapture, this);
                     var key = eventType + " " + configObj.selector + " " + configObj.useCapture;
@@ -444,11 +444,11 @@ var dcore;
     "use strict";
     var mvp = dcore.plugins.mvp;
     dcore.Instance.prototype.useMVP = function () {
-        var that = this;
-        if (that.mvp) {
-            return;
+        if (this.mvp) {
+            console.warn("MVP plugin has been already installed");
+            return this;
         }
-        that.mvp = {
+        this.mvp = {
             Model: mvp.Model,
             asMVPModel: mvp.asModel,
             ModelEvents: mvp.ModelEvents,
@@ -457,7 +457,8 @@ var dcore;
             View: mvp.View,
             Presenter: mvp.Presenter,
         };
-        that.Sandbox.prototype.asMVPModel = mvp.asModel;
+        this.Sandbox.prototype.asMVPModel = mvp.asModel;
+        return this;
     };
 })(dcore || (dcore = {}));
 //# sourceMappingURL=install.js.map
