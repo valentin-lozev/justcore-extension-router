@@ -4,7 +4,7 @@
   "Compile": { "Mode": "External" },
   "References": [
     {
-      "Path": "src/dcore-1.0.0.js"
+      "Path": "src/dcore-1.0.1.js"
     },
     {
       "Path": "src/routing/UrlHash.js"

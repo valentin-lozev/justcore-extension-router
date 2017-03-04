@@ -292,10 +292,11 @@ var dcore;
         this.routing = new routing.RouteConfig();
         this.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
         this.Sandbox.prototype.go = sandboxGo;
-        this.hook(dcore.HookType.Core_DOMReady, function () {
+        this.hook(dcore.HOOK_DOM_READY, function () {
             if (_this.routing.hasRoutes()) {
                 global.addEventListener("hashchange", handleRoute.bind(_this));
             }
+            return true;
         });
         return this;
     };

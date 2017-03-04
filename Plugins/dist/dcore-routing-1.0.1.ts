@@ -337,10 +337,12 @@ namespace dcore {
         this.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
         this.Sandbox.prototype.go = sandboxGo;
 
-        this.hook(dcore.HookType.Core_DOMReady, () => {
+        this.hook(dcore.HOOK_DOM_READY, (): boolean => {
             if (this.routing.hasRoutes()) {
                 global.addEventListener("hashchange", handleRoute.bind(this));
             }
+
+            return true;
         });
         return this;
     };
