@@ -1,0 +1,28 @@
+{
+  "name": "dcore-routing",
+  "description": "Routing plugin for dcore.js",
+  "private": false,
+  "main": "dist/dcore-routing.js",
+  "moduleType": "globals",
+  "license": "MIT",
+  "ignore": [
+    "src",
+    "tests",
+    "Properties",
+    "*.json",
+    "*.cs",
+    "gulpfile.js",
+    "jasmine.d.ts",
+    "*.sln",
+    "*.xproj"
+  ],
+  "keywords": [ "dcore", "plugin", "routing", "typescript" ],
+  "authors": [ "Valentin Lozev <valentin.zh.lozev@gmail.com>" ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/valentin-lozev/dcore-routing.git"
+  },
+  "dependencies": {
+    "dcore": "1.0.1"
+  }
+}

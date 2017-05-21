@@ -1,0 +1,28 @@
+{
+  "Framework": "jasmine",
+  "TestHarnessLocationMode": "SettingsFileAdjacent",
+  "Compile": { "Mode": "External" },
+  "References": [
+    {
+      "Path": "bower_components/dcore/dist/dcore.js"
+    },
+    {
+      "Path": "src/UrlHash.js"
+    },
+    {
+      "Path": "src/Route.js"
+    },
+    {
+      "Path": "src/RouteConfig.js"
+    },
+    {
+      "Path": "src/install.js"
+    }
+  ],
+  "Tests": [
+    {
+      "Path": "tests",
+      "Includes": [ "*.js" ]
+    }
+  ]
+}

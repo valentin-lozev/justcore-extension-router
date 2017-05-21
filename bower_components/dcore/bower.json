@@ -1,0 +1,27 @@
+{
+  "name": "dcore",
+  "description": "Modular javascript application framework",
+  "private": false,
+  "main": "dist/dcore.js",
+  "moduleType": "globals",
+  "license": "MIT",
+  "ignore": [
+    "src",
+    "tests",
+    "Properties",
+    "*.json",
+    "*.cs",
+    "gulpfile.js",
+    "jasmine.d.ts",
+    "*.sln",
+    "*.xproj"
+  ],
+  "keywords": [ "modular", "javascript", "framework", "typescript" ],
+  "authors": [ "Valentin Lozev <valentin.zh.lozev@gmail.com>" ],
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/valentin-lozev/dcore.git"
+  },
+  "dependencies": {
+  }
+}
