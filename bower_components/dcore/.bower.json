@@ -12,9 +12,9 @@
     "*.json",
     "*.cs",
     "gulpfile.js",
-    "jasmine.d.ts",
     "*.sln",
-    "*.xproj"
+    "karma.conf.js",
+    "*.csproj"
   ],
   "keywords": [
     "modular",
@@ -31,14 +31,14 @@
   },
   "dependencies": {},
   "homepage": "https://github.com/valentin-lozev/dcore",
-  "version": "1.0.1",
-  "_release": "1.0.1",
+  "version": "2.0.0",
+  "_release": "2.0.0",
   "_resolution": {
     "type": "version",
-    "tag": "1.0.1",
-    "commit": "9af0eff672a1e4382758182ed406017c2d6133fc"
+    "tag": "2.0.0",
+    "commit": "41fc5d44e32de59bcf20c3eb971eee733465b3a7"
   },
   "_source": "https://github.com/valentin-lozev/dcore.git",
-  "_target": "1.0.1",
+  "_target": "~2.0.0",
   "_originalSource": "dcore"
 }

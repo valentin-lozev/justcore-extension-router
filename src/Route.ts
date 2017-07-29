@@ -1,4 +1,4 @@
-﻿namespace dcore.plugins.routing {
+﻿namespace dcore.routing {
     "use strict";
 
     interface RouteToken {
@@ -6,21 +6,21 @@
         isDynamic: boolean;
     }
 
-    let routeParamRegex = /{([a-zA-Z]+)}/; // e.g {id}
+    const routeParamRegex = /{([a-zA-Z]+)}/; // e.g {id}
     
     /**
-     *  @class Route - Accepts a pattern and split it by / (slash).
+     *  Accepts a pattern and split it by / (slash).
      *  It also supports dynamic params - {yourDynamicParam}.
-     *  @property {String} pattern
      */
     export class Route {
-        private callback: (routeParams: any, currentPattern?: string) => void;
-        private tokens: RouteToken[] = [];
+
         public pattern: string;
         public queryParams: Object;
+        private callback: (routeParams: any, currentPattern?: string) => void;
+        private tokens: RouteToken[] = [];
 
         constructor(pattern: string, onStart: (routeParams: any, currentPattern?: string) => void) {
-            let errorMsg = "Route registration failed:";
+            const errorMsg = "Route registration failed:";
             if (typeof pattern !== "string") {
                 throw new TypeError(`${errorMsg} pattern should be non empty string.`);
             }

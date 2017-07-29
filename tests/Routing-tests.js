@@ -1,8 +1,6 @@
-/// <reference path="../jasmine.d.ts" />
-/// <chutzpah_reference path="jasmine.js" />
-describe("RouteConfig", function () {
+describe("Routing", function () {
     function getConfig() {
-        var core = dcore.createOne();
+        var core = new dcore.Application();
         core.useRouting();
         return core.routing;
     }
@@ -12,7 +10,7 @@ describe("RouteConfig", function () {
     });
     it("should has not any registered routes by default", function () {
         var config = getConfig();
-        expect(config.hasRoutes()).toBeFalsy();
+        expect(config.anyRoutes()).toBeFalsy();
     });
     it("should return empty array when there arent any registered routes", function () {
         var routes = getConfig().getRoutes();
@@ -23,7 +21,7 @@ describe("RouteConfig", function () {
         var config = getConfig();
         var pattern = "/home";
         config.register(pattern, function () { return; });
-        expect(config.hasRoutes()).toBeTruthy();
+        expect(config.anyRoutes()).toBeTruthy();
         expect(config.getRoutes().length).toEqual(1);
         expect(config.getRoutes()[0]).toEqual(pattern);
     });
@@ -96,7 +94,7 @@ describe("RouteConfig", function () {
         expect(handler.handle).toHaveBeenCalledWith(expectedParams, expectedPattern);
     });
     it("should start listening for hashchange on DOMContentLoaded", function () {
-        var core = dcore.createOne();
+        var core = new dcore.Application();
         core.useRouting();
         core.routing.register("", function () { return; });
         spyOn(core.routing, "startRoute");
@@ -106,4 +104,3 @@ describe("RouteConfig", function () {
         expect(core.routing.startRoute).toHaveBeenCalledTimes(1);
     });
 });
-//# sourceMappingURL=RouteConfig-tests.js.map

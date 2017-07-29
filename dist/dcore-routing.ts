@@ -1,4 +1,4 @@
-namespace dcore.plugins.routing {
+namespace dcore.routing {
     "use strict";
 
     export interface QueryParam {
@@ -7,16 +7,14 @@ namespace dcore.plugins.routing {
     }
 
     /**
-     *  @class UrlHash - Represents the string after "#" in a url.
-     *  @property {String} value - The string after # in a url.
-     *  @property {Array} tokens - The array of string tokens after splitint its value by / (slash).
-     *  @property {Array} queryParams - The array of key-value pairs parsed from the query string in its value.
+     *  Represents the string after "#" in a url.
      */
     export class UrlHash {
-        private questionMarkIndex: number = -1;
-        private url: string = "";
+
         public tokens: string[] = [];
         public queryParams: QueryParam[] = [];
+        private questionMarkIndex: number = -1;
+        private url: string = "";
 
         get value(): string {
             return this.url;
@@ -71,7 +69,7 @@ namespace dcore.plugins.routing {
         }
     }
 }
-namespace dcore.plugins.routing {
+namespace dcore.routing {
     "use strict";
 
     interface RouteToken {
@@ -79,21 +77,21 @@ namespace dcore.plugins.routing {
         isDynamic: boolean;
     }
 
-    let routeParamRegex = /{([a-zA-Z]+)}/; // e.g {id}
+    const routeParamRegex = /{([a-zA-Z]+)}/; // e.g {id}
     
     /**
-     *  @class Route - Accepts a pattern and split it by / (slash).
+     *  Accepts a pattern and split it by / (slash).
      *  It also supports dynamic params - {yourDynamicParam}.
-     *  @property {String} pattern
      */
     export class Route {
-        private callback: (routeParams: any, currentPattern?: string) => void;
-        private tokens: RouteToken[] = [];
+
         public pattern: string;
         public queryParams: Object;
+        private callback: (routeParams: any, currentPattern?: string) => void;
+        private tokens: RouteToken[] = [];
 
         constructor(pattern: string, onStart: (routeParams: any, currentPattern?: string) => void) {
-            let errorMsg = "Route registration failed:";
+            const errorMsg = "Route registration failed:";
             if (typeof pattern !== "string") {
                 throw new TypeError(`${errorMsg} pattern should be non empty string.`);
             }
@@ -190,58 +188,34 @@ namespace dcore.plugins.routing {
         }
     }
 }
-namespace dcore.plugins.routing {
+interface DRouteState {
+    pattern: string;
+    params: any;
+}
+
+namespace dcore {
     "use strict";
 
-    function findRoute(): Route {
-        for (let i = 0, len = this.routes.length; i < len; i++) {
-            let route = this.routes[i];
-            if (route.equals(this.urlHash)) {
-                return route;
-            }
-        }
+    import plugin = routing;
 
-        return null;
-    }
+    export class Routing {
 
-    function startDefaultRoute(invalidHash: string): void {
-        window.history.replaceState(
-            null,
-            null,
-            window.location.pathname + "#" + this.defaultUrl
-        );
-
-        this.urlHash.value = this.defaultUrl;
-        this.currentRoute = findRoute.call(this);
-        if (this.currentRoute) {
-            this.currentRoute.start(this.urlHash);
-        } else {
-            console.warn("No route handler for " + invalidHash);
-        }
-    }
-
-    /**
-     *  @class RouteConfig - Handles window hash change.
-     */
-    export class RouteConfig {
-        private routes: Route[] = [];
-        private urlHash: UrlHash = new UrlHash();
-        private currentRoute: Route;
-
-        public defaultUrl: string = null;
+        defaultUrl: string = null;
+        private routes: plugin.Route[] = [];
+        private urlHash: plugin.UrlHash = new plugin.UrlHash();
+        private currentRoute: plugin.Route;
 
         /**
          *  Registers a route by given url pattern.
          *  When url's hash is changed it executes a callback with populated dynamic routes and query parameters.
          *  Dynamic route param can be registered with {yourParam}.
          */
-        register(pattern: string, callback: (routeParams: any, currentPattern?: string) => void): this {
+        register(pattern: string, callback: (routeParams: any, currentPattern?: string) => void): void {
             if (this.routes.some(r => r.pattern === pattern)) {
                 throw new Error("register(): Route " + pattern + " has been already registered.");
             }
 
-            this.routes.push(new Route(pattern, callback));
-            return this;
+            this.routes.push(new plugin.Route(pattern, callback));
         }
 
         /**
@@ -249,14 +223,14 @@ namespace dcore.plugins.routing {
          */
         startRoute(hash: string): void {
             this.urlHash.value = hash;
-            this.currentRoute = findRoute.call(this);
+            this.currentRoute = this.__findRoute();
             if (this.currentRoute) {
                 this.currentRoute.start(this.urlHash);
                 return;
             }
 
             if (typeof this.defaultUrl === "string") {
-                startDefaultRoute.call(this, hash);
+                this.__startDefaultRoute(hash);
             } else {
                 console.warn("No route matches " + hash);
             }
@@ -265,7 +239,7 @@ namespace dcore.plugins.routing {
         getCurrentRoute(): DRouteState {
             return {
                 pattern: this.currentRoute ? this.currentRoute.pattern : null,
-                params: this.currentRoute ? this.currentRoute.queryParams: null
+                params: this.currentRoute ? this.currentRoute.queryParams : null
             };
         }
 
@@ -279,19 +253,41 @@ namespace dcore.plugins.routing {
         /**
          *  Determines if there are any registered routes.
          */
-        hasRoutes(): boolean {
+        anyRoutes(): boolean {
             return this.routes.length > 0;
+        }
+
+        private __findRoute(): plugin.Route {
+            for (let i = 0, len = this.routes.length; i < len; i++) {
+                let route = this.routes[i];
+                if (route.equals(this.urlHash)) {
+                    return route;
+                }
+            }
+
+            return null;
+        }
+
+        private __startDefaultRoute(invalidHash: string): void {
+            window.history.replaceState(
+                null,
+                null,
+                window.location.pathname + "#" + this.defaultUrl
+            );
+
+            this.urlHash.value = this.defaultUrl;
+            this.currentRoute = this.__findRoute();
+            if (this.currentRoute) {
+                this.currentRoute.start(this.urlHash);
+            } else {
+                console.warn("No route handler for " + invalidHash);
+            }
         }
     }
 }
-
-interface DRouteState {
-    pattern: string;
-    params: any;
-}
 interface DCore {
     useRouting(): DCore;
-    routing: dcore.plugins.routing.RouteConfig;
+    routing: dcore.Routing;
 }
 
 interface DSandbox {
@@ -302,16 +298,12 @@ interface DSandbox {
 namespace dcore {
     "use strict";
 
-    import routing = plugins.routing;
-
-    let global = window;
-
-    export interface Instance {
+    export interface Application {
         useRouting(): DCore;
-        routing: routing.RouteConfig;
+        routing: Routing;
     }
 
-    export interface DefaultSandbox {
+    export interface Sandbox {
         getCurrentRoute(): DRouteState;
         go(url: string): void;
     }
@@ -324,26 +316,30 @@ namespace dcore {
         location.hash = url;
     }
 
-    function handleRoute() {
-        this.routing.startRoute(global.location.hash.substring(1));
+    function handleRoute(this: DCore) {
+        this.routing.startRoute(window.location.hash.substring(1));
     }
 
-    Instance.prototype.useRouting = function (this: DCore): DCore {
-        if (this.routing) {
-            return this;
+    function runRouting(this: DCore, next: Function): void {
+        if (this.routing.anyRoutes()) {
+            window.addEventListener("hashchange", handleRoute.bind(this));
         }
 
-        this.routing = new routing.RouteConfig();
-        this.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
-        this.Sandbox.prototype.go = sandboxGo;
+        next.call(this);
+    }
 
-        this.hook(dcore.HOOK_DOM_READY, (): boolean => {
-            if (this.routing.hasRoutes()) {
-                global.addEventListener("hashchange", handleRoute.bind(this));
-            }
+    Application.prototype.useRouting = function (this: DCore): DCore {
+        if (!this.routing) {
+            this.routing = new Routing();
 
-            return true;
-        });
+            (function (sb: DSandbox) {
+                sb.getCurrentRoute = sandboxGetCurrentRoute;
+                sb.go = sandboxGo;
+            }(this.Sandbox.prototype));
+
+            this.hook(hooks.CORE_RUN, runRouting);
+        }
+
         return this;
     };
 }

@@ -7,7 +7,7 @@ var es = require('event-stream');
 var routingFiles = [
     "src/UrlHash",
     "src/Route",
-    "src/RouteConfig",
+    "src/Routing",
     "src/install"
 ];
 

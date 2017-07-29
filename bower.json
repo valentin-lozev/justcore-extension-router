@@ -13,9 +13,9 @@
     "*.json",
     "*.cs",
     "gulpfile.js",
-    "jasmine.d.ts",
     "*.sln",
-    "*.xproj"
+    "*.csproj",
+    "karma.conf.js"
   ],
   "keywords": [ "dcore", "plugin", "routing", "typescript" ],
   "authors": [ "Valentin Lozev <valentin.zh.lozev@gmail.com>" ],
@@ -24,6 +24,6 @@
     "url": "http://github.com/valentin-lozev/dcore-routing.git"
   },
   "dependencies": {
-    "dcore": "1.0.1"
+    "dcore": "~2.0.0"
   }
 }

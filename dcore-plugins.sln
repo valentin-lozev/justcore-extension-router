@@ -1,20 +1,31 @@
-﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Plugins", "Plugins\Plugins.xproj", "{06F8F858-32D3-4B74-AB0A-5BA4AD010151}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "dcore-routing", "dcore-routing.csproj", "{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{06F8F858-32D3-4B74-AB0A-5BA4AD010151}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{06F8F858-32D3-4B74-AB0A-5BA4AD010151}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{06F8F858-32D3-4B74-AB0A-5BA4AD010151}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{06F8F858-32D3-4B74-AB0A-5BA4AD010151}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Debug|x64.Build.0 = Debug|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Debug|x86.Build.0 = Debug|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Release|x64.ActiveCfg = Release|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Release|x64.Build.0 = Release|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Release|x86.ActiveCfg = Release|Any CPU
+		{5D6F7172-3EC6-4E89-B06B-9D24AB3F6D34}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,10 +1,7 @@
-﻿/// <reference path="../jasmine.d.ts" />
-/// <chutzpah_reference path="jasmine.js" />
+﻿describe("Routing", () => {
 
-describe("RouteConfig", () => {
-
-    function getConfig(): dcore.plugins.routing.RouteConfig {
-        let core = dcore.createOne();
+    function getConfig(): dcore.Routing {
+        let core = new dcore.Application();
         core.useRouting();
         return core.routing;
     }
@@ -18,7 +15,7 @@ describe("RouteConfig", () => {
     it("should has not any registered routes by default", () => {
         let config = getConfig();
 
-        expect(config.hasRoutes()).toBeFalsy();
+        expect(config.anyRoutes()).toBeFalsy();
     });
 
     it("should return empty array when there arent any registered routes", () => {
@@ -34,7 +31,7 @@ describe("RouteConfig", () => {
 
         config.register(pattern, () => { return; });
 
-        expect(config.hasRoutes()).toBeTruthy();
+        expect(config.anyRoutes()).toBeTruthy();
         expect(config.getRoutes().length).toEqual(1);
         expect(config.getRoutes()[0]).toEqual(pattern);
     });
@@ -126,7 +123,7 @@ describe("RouteConfig", () => {
     });
 
     it("should start listening for hashchange on DOMContentLoaded", () => {
-        let core = dcore.createOne();
+        let core = new dcore.Application();
         core.useRouting();
         core.routing.register("", () => { return; });
         spyOn(core.routing, "startRoute");

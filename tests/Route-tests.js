@@ -1,12 +1,10 @@
-/// <reference path="../jasmine.d.ts" />
-/// <chutzpah_reference path="jasmine.js" />
 describe("Route", function () {
     function getRoute(pattern, callback) {
         callback = callback || function () { return; };
-        return new dcore.plugins.routing.Route(pattern, callback);
+        return new dcore.routing.Route(pattern, callback);
     }
     function getHash(value) {
-        var result = new dcore.plugins.routing.UrlHash();
+        var result = new dcore.routing.UrlHash();
         result.value = value;
         return result;
     }
@@ -153,4 +151,3 @@ describe("Route", function () {
         }, pattern);
     });
 });
-//# sourceMappingURL=Route-tests.js.map

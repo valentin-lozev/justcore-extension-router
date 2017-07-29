@@ -1,6 +1,6 @@
 ﻿interface DCore {
     useRouting(): DCore;
-    routing: dcore.plugins.routing.RouteConfig;
+    routing: dcore.Routing;
 }
 
 interface DSandbox {
@@ -11,16 +11,12 @@ interface DSandbox {
 namespace dcore {
     "use strict";
 
-    import routing = plugins.routing;
-
-    let global = window;
-
-    export interface Instance {
+    export interface Application {
         useRouting(): DCore;
-        routing: routing.RouteConfig;
+        routing: Routing;
     }
 
-    export interface DefaultSandbox {
+    export interface Sandbox {
         getCurrentRoute(): DRouteState;
         go(url: string): void;
     }
@@ -33,26 +29,30 @@ namespace dcore {
         location.hash = url;
     }
 
-    function handleRoute() {
-        this.routing.startRoute(global.location.hash.substring(1));
+    function handleRoute(this: DCore) {
+        this.routing.startRoute(window.location.hash.substring(1));
     }
 
-    Instance.prototype.useRouting = function (this: DCore): DCore {
-        if (this.routing) {
-            return this;
+    function runRouting(this: DCore, next: Function): void {
+        if (this.routing.anyRoutes()) {
+            window.addEventListener("hashchange", handleRoute.bind(this));
         }
 
-        this.routing = new routing.RouteConfig();
-        this.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
-        this.Sandbox.prototype.go = sandboxGo;
+        next.call(this);
+    }
 
-        this.hook(dcore.HOOK_DOM_READY, (): boolean => {
-            if (this.routing.hasRoutes()) {
-                global.addEventListener("hashchange", handleRoute.bind(this));
-            }
+    Application.prototype.useRouting = function (this: DCore): DCore {
+        if (!this.routing) {
+            this.routing = new Routing();
 
-            return true;
-        });
+            (function (sb: DSandbox) {
+                sb.getCurrentRoute = sandboxGetCurrentRoute;
+                sb.go = sandboxGo;
+            }(this.Sandbox.prototype));
+
+            this.hook(hooks.CORE_RUN, runRouting);
+        }
+
         return this;
     };
 }

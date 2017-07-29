@@ -1,8 +1,6 @@
 var dcore;
 (function (dcore) {
     "use strict";
-    var routing = dcore.plugins.routing;
-    var global = window;
     function sandboxGetCurrentRoute() {
         return this.core.routing.getCurrentRoute();
     }
@@ -10,23 +8,23 @@ var dcore;
         location.hash = url;
     }
     function handleRoute() {
-        this.routing.startRoute(global.location.hash.substring(1));
+        this.routing.startRoute(window.location.hash.substring(1));
     }
-    dcore.Instance.prototype.useRouting = function () {
-        var _this = this;
-        if (this.routing) {
-            return this;
+    function runRouting(next) {
+        if (this.routing.anyRoutes()) {
+            window.addEventListener("hashchange", handleRoute.bind(this));
         }
-        this.routing = new routing.RouteConfig();
-        this.Sandbox.prototype.getCurrentRoute = sandboxGetCurrentRoute;
-        this.Sandbox.prototype.go = sandboxGo;
-        this.hook(dcore.HOOK_DOM_READY, function () {
-            if (_this.routing.hasRoutes()) {
-                global.addEventListener("hashchange", handleRoute.bind(_this));
-            }
-            return true;
-        });
+        next.call(this);
+    }
+    dcore.Application.prototype.useRouting = function () {
+        if (!this.routing) {
+            this.routing = new dcore.Routing();
+            (function (sb) {
+                sb.getCurrentRoute = sandboxGetCurrentRoute;
+                sb.go = sandboxGo;
+            }(this.Sandbox.prototype));
+            this.hook(dcore.hooks.CORE_RUN, runRouting);
+        }
         return this;
     };
 })(dcore || (dcore = {}));
-//# sourceMappingURL=install.js.map

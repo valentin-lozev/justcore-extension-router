@@ -1,34 +1,31 @@
-﻿/// <reference path="../jasmine.d.ts" />
-/// <chutzpah_reference path="jasmine.js" />
+﻿describe("UrlHash", () => {
 
-describe("UrlHash", () => {
-
-    function getIt(): dcore.plugins.routing.UrlHash {
-        return new dcore.plugins.routing.UrlHash();
+    function getOne(): dcore.routing.UrlHash {
+        return new dcore.routing.UrlHash();
     }
 
     it("should have empty string set as default value", () => {
-        let hash = getIt();
+        let hash = getOne();
 
         expect(hash.value).toEqual("");
     });
 
     it("should have an empty array of tokens when value is not set", () => {
-        let hash = getIt();
+        let hash = getOne();
 
         expect(Array.isArray(hash.tokens)).toBeTruthy();
         expect(hash.tokens.length).toEqual(0);
     });
 
     it("should have empty array of query params when value is not set", () => {
-        let hash = getIt();
+        let hash = getOne();
 
         expect(Array.isArray(hash.queryParams)).toBeTruthy();
         expect(hash.queryParams.length).toEqual(0);
     });
 
     it("should set empty string when value is null", () => {
-        let hash = getIt();
+        let hash = getOne();
 
         hash.value = null;
 
@@ -37,7 +34,7 @@ describe("UrlHash", () => {
     });
 
     it("should set empty string when value is undefined", () => {
-        let hash = getIt();
+        let hash = getOne();
 
         hash.value = undefined;
 
@@ -46,7 +43,7 @@ describe("UrlHash", () => {
     });
 
     it("should split url by slashes when query params are missing", () => {
-        let hash = getIt();
+        let hash = getOne();
         let url = "/books/edit/";
 
         hash.value = url;
@@ -58,7 +55,7 @@ describe("UrlHash", () => {
     });
 
     it("should split url by slashes when there are query params", () => {
-        let hash = getIt();
+        let hash = getOne();
         let url = "/books/edit?page=1&id=-11&title=book";
 
         hash.value = url;
@@ -74,7 +71,7 @@ describe("UrlHash", () => {
     });
 
     it("should parse query params case sensitive", () => {
-        let hash = getIt();
+        let hash = getOne();
         let url = "/books/?Page=1&id=-11&tiTle=Book";
 
         hash.value = url;
@@ -89,7 +86,7 @@ describe("UrlHash", () => {
     });
 
     it("should parse query value as empty when value is missing", () => {
-        let hash = getIt();
+        let hash = getOne();
         let url = "/books?page=1&id";
 
         hash.value = url;

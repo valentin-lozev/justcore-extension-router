@@ -4,350 +4,500 @@
  *  Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
  *  Source code: http://github.com/valentin-lozev/dcore
  */
+if (typeof Object.assign != 'function') {
+    Object.assign = function (target, varArgs) {
+        'use strict';
+        if (target == null) {
+            throw new TypeError('Cannot convert undefined or null to object');
+        }
+        var to = Object(target);
+        for (var index = 1; index < arguments.length; index++) {
+            var nextSource = arguments[index];
+            if (nextSource != null) {
+                for (var nextKey in nextSource) {
+                    // Avoid bugs when hasOwnProperty is shadowed
+                    if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+                        to[nextKey] = nextSource[nextKey];
+                    }
+                }
+            }
+        }
+        return to;
+    };
+}
+// Production steps of ECMA-262, Edition 5, 15.4.4.22
+// Reference: http://es5.github.io/#x15.4.4.22
+if (typeof Array.prototype.reduceRight !== 'function') {
+    Array.prototype.reduceRight = function (callback /*, initialValue*/) {
+        'use strict';
+        if (null === this || 'undefined' === typeof this) {
+            throw new TypeError('Array.prototype.reduce called on null or undefined');
+        }
+        if ('function' !== typeof callback) {
+            throw new TypeError(callback + ' is not a function');
+        }
+        var t = Object(this), len = t.length >>> 0, k = len - 1, value;
+        if (arguments.length >= 2) {
+            value = arguments[1];
+        }
+        else {
+            while (k >= 0 && !(k in t)) {
+                k--;
+            }
+            if (k < 0) {
+                throw new TypeError('Reduce of empty array with no initial value');
+            }
+            value = t[k--];
+        }
+        for (; k >= 0; k--) {
+            if (k in t) {
+                value = callback(value, t[k], k, t);
+            }
+        }
+        return value;
+    };
+}
 var dcore;
 (function (dcore) {
-    "use strict";
-    /**
-     *  @class Sandbox - Connects all modules to the outside world.
-     *  @property {String} moduleInstanceId - Id of the module it serves for.
-     */
-    var DefaultSandbox = (function () {
-        function DefaultSandbox(core, moduleId, moduleInstanceId) {
-            if (!core || !moduleId || !moduleInstanceId) {
-                throw new Error("DefaultSandbox: Missing core or module instance ID");
+    var _private;
+    (function (_private) {
+        "use strict";
+        var DArgumentGuard = (function () {
+            function DArgumentGuard(errorMsgPrefix) {
+                if (errorMsgPrefix === void 0) { errorMsgPrefix = ""; }
+                this.errorMsgPrefix = errorMsgPrefix;
             }
+            DArgumentGuard.prototype.mustBeTrue = function (arg, msg) {
+                if (!arg)
+                    throw new Error(this.errorMsgPrefix + msg);
+                return this;
+            };
+            DArgumentGuard.prototype.mustBeDefined = function (arg, msg) {
+                if (typeof arg === "undefined" || arg === null)
+                    throw new Error(this.errorMsgPrefix + msg);
+                return this;
+            };
+            DArgumentGuard.prototype.mustBeUndefined = function (arg, msg) {
+                if (typeof arg !== "undefined" && arg !== null)
+                    throw new Error(this.errorMsgPrefix + msg);
+                return this;
+            };
+            DArgumentGuard.prototype.mustBeNonEmptyString = function (arg, msg) {
+                if (typeof arg !== "string" || !arg.length)
+                    throw new Error(this.errorMsgPrefix + msg);
+                return this;
+            };
+            DArgumentGuard.prototype.mustBeFunction = function (arg, msg) {
+                if (typeof arg !== "function")
+                    throw new Error(this.errorMsgPrefix + msg);
+                return this;
+            };
+            DArgumentGuard.prototype.mustBeArray = function (arg, msg) {
+                if (!Array.isArray(arg))
+                    throw new Error(this.errorMsgPrefix + msg);
+                return this;
+            };
+            return DArgumentGuard;
+        }());
+        function argumentGuard(errorMsgPrefix) {
+            if (errorMsgPrefix === void 0) { errorMsgPrefix = ""; }
+            return new DArgumentGuard(errorMsgPrefix);
+        }
+        _private.argumentGuard = argumentGuard;
+    })(_private = dcore._private || (dcore._private = {}));
+})(dcore || (dcore = {}));
+(function (dcore) {
+    var _private;
+    (function (_private) {
+        "use strict";
+        var hasOwnProperty = Object.prototype.hasOwnProperty;
+        var lastUsedSubscriptionID = 0;
+        var DMessagesAggregator = (function () {
+            function DMessagesAggregator() {
+                this.subscribers = {};
+            }
+            DMessagesAggregator.prototype.subscribe = function (topics, handler) {
+                var _this = this;
+                _private.argumentGuard("subscribe(): ")
+                    .mustBeFunction(handler, "message handler should be a function.")
+                    .mustBeArray(topics, "topics should be passed as an array of strings.");
+                var token = {};
+                topics.forEach(function (topic) { return token[topic] = _this.__addSubscriber(topic, handler); });
+                var that = this;
+                return {
+                    destroy: function (topic) {
+                        if (arguments.length > 0) {
+                            that.__unsubscribe(topic, token);
+                            return;
+                        }
+                        Object.keys(token).forEach(function (topic) { return that.__unsubscribe(topic, token); });
+                    }
+                };
+            };
+            DMessagesAggregator.prototype.publish = function (topic, message) {
+                if (!hasOwnProperty.call(this.subscribers, topic)) {
+                    return;
+                }
+                var subscriptions = this.subscribers[topic];
+                Object.keys(subscriptions).forEach(function (key) {
+                    var handler = subscriptions[key];
+                    setTimeout(function () {
+                        try {
+                            handler(topic, message);
+                        }
+                        catch (err) {
+                            console.error("publish(): Receive \"" + topic + "\" message failed.");
+                            console.error(err);
+                            console.error("Handler:");
+                            console.error(handler);
+                        }
+                    }, 0);
+                });
+            };
+            DMessagesAggregator.prototype.__addSubscriber = function (topic, handler) {
+                if (!hasOwnProperty.call(this.subscribers, topic)) {
+                    this.subscribers[topic] = {};
+                }
+                var subscriptionID = "sbscrptn" + (++lastUsedSubscriptionID);
+                this.subscribers[topic][subscriptionID] = handler;
+                return subscriptionID;
+            };
+            DMessagesAggregator.prototype.__unsubscribe = function (topic, token) {
+                if (!hasOwnProperty.call(token, topic)) {
+                    return;
+                }
+                var subscriptionID = token[topic];
+                delete this.subscribers[topic][subscriptionID];
+            };
+            return DMessagesAggregator;
+        }());
+        _private.DMessagesAggregator = DMessagesAggregator;
+    })(_private = dcore._private || (dcore._private = {}));
+})(dcore || (dcore = {}));
+(function (dcore) {
+    var _private;
+    (function (_private) {
+        "use strict";
+        var DPluginsPipeline = (function () {
+            function DPluginsPipeline() {
+                this.pluginsMap = {};
+            }
+            DPluginsPipeline.prototype.hook = function (hookName, plugin) {
+                _private.argumentGuard("hook(): ")
+                    .mustBeNonEmptyString(hookName, "hook name must be a non empty string")
+                    .mustBeFunction(plugin, "plugin must be a function");
+                var list = this.pluginsMap[hookName];
+                if (!list) {
+                    this.pluginsMap[hookName] = list = [];
+                }
+                list.push(plugin);
+            };
+            DPluginsPipeline.prototype.pipe = function (hookName, hookInvoker, hookContext) {
+                var args = [];
+                for (var _i = 3; _i < arguments.length; _i++) {
+                    args[_i - 3] = arguments[_i];
+                }
+                _private.argumentGuard("pipe(): ")
+                    .mustBeFunction(hookInvoker, "hook invoker must be a function");
+                var pipeline = (this.pluginsMap[hookName] || [])
+                    .slice(0)
+                    .reduceRight(function (next, pipeline) {
+                    return function () {
+                        var args = [];
+                        for (var _i = 0; _i < arguments.length; _i++) {
+                            args[_i] = arguments[_i];
+                        }
+                        return pipeline.apply(this, [next].concat(args));
+                    };
+                }, hookInvoker);
+                var result = pipeline.apply(hookContext, args);
+                pipeline = null;
+                return result;
+            };
+            return DPluginsPipeline;
+        }());
+        _private.DPluginsPipeline = DPluginsPipeline;
+    })(_private = dcore._private || (dcore._private = {}));
+})(dcore || (dcore = {}));
+(function (dcore) {
+    var hooks;
+    (function (hooks) {
+        "use strict";
+        hooks.SANDBOX_SUBSCRIBE = "sandbox.subscribe";
+        hooks.SANDBOX_PUBLISH = "sandbox.publish";
+        hooks.SANDBOX_START = "sandbox.start";
+        hooks.SANDBOX_STOP = "sandbox.stop";
+    })(hooks = dcore.hooks || (dcore.hooks = {}));
+})(dcore || (dcore = {}));
+(function (dcore) {
+    "use strict";
+    var _privateData = dcore._private;
+    /**
+     *  Connects the modules to the outside world. Facade of the core.
+     */
+    var Sandbox = (function () {
+        function Sandbox(core, moduleId, moduleInstanceId) {
+            _privateData.argumentGuard("DefaultSandbox: ")
+                .mustBeDefined(core, "core must be provided")
+                .mustBeNonEmptyString(moduleId, "module id must be a non empty string")
+                .mustBeNonEmptyString(moduleInstanceId, "module instance id must be a non empty string");
             this.core = core;
             this.moduleId = moduleId;
             this.moduleInstanceId = moduleInstanceId;
         }
         /**
-         *  Subscribes for given topics.
-         *  @param {Array} topics Array of topics to subscribe for.
-         *  @param {Function} handler The message handler.
-         *  @returns {Object}
+         *  Gets the module id it serves for.
          */
-        DefaultSandbox.prototype.subscribe = function (topics, handler) {
-            return this.core.subscribe(topics, handler);
+        Sandbox.prototype.getModuleId = function () {
+            return this.moduleId;
         };
         /**
-         *  Publishes a message.
-         *  @param {String} topic The topic of the message.
-         *  @param {*} [data] Optional data.
+         *  Gets the module instance id it serves for.
          */
-        DefaultSandbox.prototype.publish = function (topic, data) {
-            this.core.publish(topic, data);
-            return this;
+        Sandbox.prototype.getModuleInstanceId = function () {
+            return this.moduleInstanceId;
+        };
+        /**
+         *  Gets application's current state.
+         */
+        Sandbox.prototype.getAppState = function () {
+            return this.core.getState();
+        };
+        /**
+         *  Update application's current state by merging the provided object to the current state.
+         *  Also, "isRunning" and "isDebug" are being skipped.
+         *  "isRunning" is used internaly, "isDebug" can be set only on first initialization.
+         */
+        Sandbox.prototype.setAppState = function (value) {
+            this.core.setState(value);
+        };
+        Sandbox.prototype.subscribe = function (topics, handler) {
+            return this.core.pipe(dcore.hooks.SANDBOX_SUBSCRIBE, this.__subscribe, this, Array.isArray(topics) ? topics : [topics], handler);
+        };
+        /**
+         *  Publishes a message asynchronously.
+         */
+        Sandbox.prototype.publish = function (topic, message) {
+            this.core.pipe(dcore.hooks.SANDBOX_PUBLISH, this.__publish, this, topic, message);
         };
         /**
          *  Starts an instance of given module and initializes it.
-         *  @param {string} moduleId Id of the module which must be started.
-         *  @param {object} [options] Optional options.
          */
-        DefaultSandbox.prototype.start = function (moduleId, options) {
-            this.core.start(moduleId, options);
-            return this;
+        Sandbox.prototype.start = function (moduleId, props) {
+            this.core.pipe(dcore.hooks.SANDBOX_START, this.__start, this, moduleId, props);
         };
         /**
          *  Stops a given module.
-         *  @param {string} moduleId Id of the module which must be stopped.
-         *  @param {string} [instanceId] Optional. Specific module's instance id.
          */
-        DefaultSandbox.prototype.stop = function (moduleId, instanceId) {
-            this.core.stop(moduleId, instanceId);
-            return this;
+        Sandbox.prototype.stop = function (moduleId, instanceId) {
+            this.core.pipe(dcore.hooks.SANDBOX_STOP, this.__stop, this, moduleId, instanceId);
         };
-        return DefaultSandbox;
+        Sandbox.prototype.__subscribe = function (topics, handler) {
+            return this.core.subscribe(topics, handler);
+        };
+        Sandbox.prototype.__publish = function (topic, message) {
+            this.core.publish(topic, message);
+        };
+        Sandbox.prototype.__start = function (moduleId, props) {
+            this.core.start(moduleId, props);
+        };
+        Sandbox.prototype.__stop = function (moduleId, instanceId) {
+            this.core.stop(moduleId, instanceId);
+        };
+        return Sandbox;
     }());
-    dcore.DefaultSandbox = DefaultSandbox;
+    dcore.Sandbox = Sandbox;
 })(dcore || (dcore = {}));
-var dcore;
 (function (dcore) {
     "use strict";
+    var _privateData = dcore._private;
+    delete dcore._private; // comment before run unit tests
+    var hooks;
+    (function (hooks) {
+        hooks.CORE_REGISTER = "core.register";
+        hooks.CORE_RUN = "core.run";
+        hooks.MODULE_INIT = "module.init";
+        hooks.MODULE_DESTROY = "module.destroy";
+    })(hooks = dcore.hooks || (dcore.hooks = {}));
+    function isDocumentReady() {
+        return document.readyState === "complete" ||
+            document.readyState === "interactive" ||
+            document.readyState === "loaded"; /* old safari browsers */
+    }
     var hasOwnProperty = Object.prototype.hasOwnProperty;
-    var lastUsedSubscriptionID = 0;
-    function typeGuard(expected, value, errorMsg) {
-        var toThrow = false;
-        switch (expected) {
-            case "array":
-                toThrow = !Array.isArray(value);
-                break;
-            default: toThrow = typeof value !== expected || value === null;
-        }
-        if (toThrow) {
-            throw new TypeError(errorMsg);
-        }
-    }
-    function runPlugins(hookType) {
-        var params = [];
-        for (var _i = 1; _i < arguments.length; _i++) {
-            params[_i - 1] = arguments[_i];
-        }
-        if (!this.state.isRunning) {
-            throw new Error("runPlugins(): Core is not running");
-        }
-        var plugins = this.hooks[hookType];
-        if (!Array.isArray(plugins)) {
-            return true;
-        }
-        var argumentsLength = arguments.length;
-        var args = new Array(argumentsLength - 1);
-        for (var i = 1; i < argumentsLength; i++) {
-            args[i - 1] = arguments[i];
-        }
-        for (var i = 0, len = plugins.length; i < len; i++) {
-            try {
-                if (!plugins[i].apply(null, args)) {
-                    return false;
-                }
-            }
-            catch (err) {
-                var argsDetails = args.length > 0 ? args.join(", ") : "none";
-                console.error("runPlugins(): Execution failed on hook " + hookType);
-                console.error("runPlugins(): Execution arguments: " + argsDetails);
-                console.error("runPlugins(): Error: " + err);
-            }
-        }
-        return true;
-    }
-    function addSubscriber(topic, handler) {
-        if (!hasOwnProperty.call(this.subscribers, topic)) {
-            this.subscribers[topic] = {};
-        }
-        var subscriptionID = "sbscrptn" + (++lastUsedSubscriptionID);
-        this.subscribers[topic][subscriptionID] = handler;
-        return subscriptionID;
-    }
-    dcore.HOOK_DOM_READY = "dom-ready";
-    dcore.HOOK_MODULE_DESTROY = "module-destroy";
-    dcore.HOOK_MODULE_DESTROYED = "module-destroyed";
-    dcore.HOOK_MODULE_INITIALIZE = "module-init";
-    dcore.HOOK_MODULE_INITIALIZED = "module-initialized";
-    dcore.HOOK_MODULE_REGISTER = "module-register";
-    dcore.HOOK_MODULE_REGISTERED = "module-registered";
-    dcore.HOOK_MODULE_PUBLISH = "module-publish";
-    dcore.HOOK_MODULE_SUBSCRIBE = "module-subscribe";
-    dcore.HOOK_MODULE_UNSUBSCRIBE = "module-unsubscribe";
-    var Instance = (function () {
-        function Instance(sandboxType, isDebug) {
+    /**
+     *  A mediator between the modules and base libraries.
+     */
+    var Application = (function () {
+        function Application(isDebug) {
             if (isDebug === void 0) { isDebug = true; }
-            this.subscribers = {};
             this.modules = {};
-            this.hooks = {};
-            this.Sandbox = typeof sandboxType === "function" ? sandboxType : dcore.DefaultSandbox;
+            this.Sandbox = dcore.Sandbox;
+            this.pluginsPipeline = new _privateData.DPluginsPipeline();
+            this.messagesAggregator = new _privateData.DMessagesAggregator();
             this.state = {
-                isDebug: !!isDebug,
+                isDebug: isDebug,
                 isRunning: false
             };
         }
         /**
-         *  Subscribes for given topics.
-         *  @param {Array} topics Array of topics to subscribe for.
-         *  @param {Function} handler The message handler.
-         *  @returns {Object}
+         *  Gets current state.
          */
-        Instance.prototype.subscribe = function (topics, handler) {
-            var errorMsg = "subscribe() failed:";
-            typeGuard("function", handler, errorMsg + " message handler should be a function.");
-            typeGuard("array", topics, errorMsg + " topics should be passed as an array of strings.");
-            if (!runPlugins.call(this, dcore.HOOK_MODULE_SUBSCRIBE, topics)) {
-                return {
-                    destroy: function () { }
-                };
-            }
-            var token = {};
-            for (var i = 0, len = topics.length; i < len; i++) {
-                var topic = topics[i];
-                var subscriptionID = addSubscriber.call(this, topic, handler);
-                token[topic] = subscriptionID;
-            }
-            var that = this;
-            return {
-                destroy: function (topic) {
-                    if (arguments.length === 0) {
-                        Object.keys(token).forEach(function (t) {
-                            runPlugins.call(that, dcore.HOOK_MODULE_UNSUBSCRIBE, t);
-                            var subscriptionID = token[t];
-                            delete that.subscribers[t][subscriptionID];
-                        });
-                        return;
-                    }
-                    if (hasOwnProperty.call(token, topic)) {
-                        runPlugins.call(that, dcore.HOOK_MODULE_UNSUBSCRIBE, topic);
-                        var subscriptionID = token[topic];
-                        delete that.subscribers[topic][subscriptionID];
-                    }
-                }
-            };
+        Application.prototype.getState = function () {
+            return Object.assign({}, this.state);
         };
         /**
-         *  Publishes a message.
-         *  @param {String} topic he topic of the message.
-         *  @param {*} [data] Optional data.
+         *  Update current state by merging the provided object to the current state.
+         *  Also, "isRunning" and "isDebug" are being skipped.
+         *  "isRunning" is used internaly, "isDebug" can be set only on first initialization.
          */
-        Instance.prototype.publish = function (topic, data) {
-            if (!hasOwnProperty.call(this.subscribers, topic)) {
-                return this;
+        Application.prototype.setState = function (value) {
+            if (typeof value === "object") {
+                value.isRunning = this.state.isRunning;
+                value.isDebug = this.state.isDebug;
+                this.state = Object.assign({}, this.state, value);
             }
-            if (!runPlugins.call(this, dcore.HOOK_MODULE_PUBLISH, topic, data)) {
-                return this;
-            }
-            var subscriptions = this.subscribers[topic];
-            Object.keys(subscriptions)
-                .forEach(function (key) {
-                var handler = subscriptions[key];
-                try {
-                    // let the browser breathе
-                    setTimeout(function () { return handler(topic, data); }, 0);
-                }
-                catch (ex) {
-                    setTimeout(function () {
-                        console.info(topic + " message publishing failed. Subscriber:");
-                        console.info(handler);
-                    }, 0);
-                }
-            });
-            return this;
+        };
+        /**
+         *  Subscribes for given topics.
+         */
+        Application.prototype.subscribe = function (topics, handler) {
+            return this.messagesAggregator.subscribe(topics, handler);
+        };
+        /**
+         *  Publishes a message asynchronously.
+         */
+        Application.prototype.publish = function (topic, message) {
+            this.messagesAggregator.publish(topic, message);
         };
         /**
          *  Registers a module.
-         *  @param {string} moduleId
-         *  @param {function} moduleFactory Function which provides an instance of the module.
          */
-        Instance.prototype.register = function (moduleId, moduleFactory) {
-            var errorMsg = "register() failed:";
-            typeGuard("string", moduleId, errorMsg + " module ID must be a string - " + moduleId);
-            typeGuard("undefined", this.modules[moduleId], errorMsg + " module with such id has been already registered - " + moduleId);
+        Application.prototype.register = function (moduleId, moduleFactory) {
+            _privateData.argumentGuard("register(): ")
+                .mustBeNonEmptyString(moduleId, "module id must be a non empty string")
+                .mustBeUndefined(this.modules[moduleId], "module with such id has been already registered - " + moduleId);
             var tempModule = moduleFactory(new this.Sandbox(this, moduleId, moduleId));
-            typeGuard("function", tempModule.init, errorMsg + " module does not implement init method");
-            typeGuard("function", tempModule.destroy, errorMsg + " module does not implement destroy method");
-            if (!runPlugins.call(this, dcore.HOOK_MODULE_REGISTER, moduleId, moduleFactory)) {
-                return this;
-            }
-            this.modules[moduleId] = {
-                create: moduleFactory,
-                instances: {}
-            };
-            runPlugins.call(this, dcore.HOOK_MODULE_REGISTERED, moduleId, moduleFactory);
-            return this;
+            _privateData.argumentGuard("register(): ")
+                .mustBeFunction(tempModule.init, "module must implement init method")
+                .mustBeFunction(tempModule.destroy, "module must implement destroy method");
+            this.pluginsPipeline.pipe(hooks.CORE_REGISTER, this.__register, this, moduleId, moduleFactory);
         };
         /**
          *  Starts an instance of given module and initializes it.
-         *  @param {string} moduleId Id of the module which must be started.
-         *  @param {object} [options] Optional options.
          */
-        Instance.prototype.start = function (moduleId, options) {
-            var module = this.modules[moduleId];
-            options = options || {};
-            var errorMsg = "start() failed:";
-            typeGuard("object", module, errorMsg + " module not found - " + moduleId);
-            typeGuard("object", options, errorMsg + " module options must be an object");
-            var instanceId = options["instanceId"] || moduleId;
-            if (hasOwnProperty.call(module.instances, instanceId)) {
-                // already initialized
-                return this;
+        Application.prototype.start = function (moduleId, props) {
+            var moduleData = this.modules[moduleId];
+            _privateData.argumentGuard("start(): ")
+                .mustBeDefined(moduleData, "module not found - " + moduleId);
+            var instanceId = props && props.instanceId ? props.instanceId : moduleId;
+            var alreadyInitialized = hasOwnProperty.call(moduleData.instances, instanceId);
+            if (alreadyInitialized) {
+                return;
             }
-            if (!runPlugins.call(this, dcore.HOOK_MODULE_INITIALIZE, moduleId, options)) {
-                return this;
+            try {
+                this.__startModule(moduleId, instanceId, moduleData, props);
             }
-            var instance = module.create(new this.Sandbox(this, moduleId, instanceId));
-            module.instances[instanceId] = instance;
-            instance.init(options);
-            runPlugins.call(this, dcore.HOOK_MODULE_INITIALIZED, moduleId, options);
-            return this;
+            catch (err) {
+                delete moduleData.instances[instanceId];
+                console.error("start(): \"" + moduleId + "\" instance init failed");
+                console.error(err);
+            }
         };
         /**
          *  Stops a given module.
-         *  @param {string} moduleId Id of the module, which must be stopped.
-         *  @param {string} [instanceId] Specific module's instance id.
          */
-        Instance.prototype.stop = function (moduleId, instanceId) {
-            var module = this.modules[moduleId];
+        Application.prototype.stop = function (moduleId, instanceId) {
+            var moduleData = this.modules[moduleId];
             var id = instanceId || moduleId;
-            if (module && hasOwnProperty.call(module.instances, id)) {
-                if (!runPlugins.call(this, dcore.HOOK_MODULE_DESTROY, moduleId, instanceId)) {
-                    return this;
-                }
-                try {
-                    module.instances[id].destroy();
-                    runPlugins.call(this, dcore.HOOK_MODULE_DESTROYED, moduleId, instanceId);
-                }
-                catch (err) {
-                    console.warn(moduleId + " destroy failed: An error has occured within the module:");
-                    console.error(err);
-                }
-                finally {
-                    delete module.instances[id];
-                }
+            if (!moduleData || !hasOwnProperty.call(moduleData.instances, id)) {
+                console.warn("stop(): \"" + moduleId + "\" destroy failed. \"" + instanceId + "\" instance not found.");
+                return;
             }
-            else {
-                console.warn(moduleId + " destroy failed: " + instanceId + " instance not found.");
+            var instance = moduleData.instances[id];
+            try {
+                this.pluginsPipeline.pipe(hooks.MODULE_DESTROY, instance.destroy, instance);
             }
-            return this;
+            catch (err) {
+                console.error("stop(): \"" + moduleId + "\" destroy failed. An error has occured within the module");
+                console.error(err);
+            }
+            finally {
+                delete moduleData.instances[id];
+                instance = null;
+            }
         };
         /**
          *  Lists all registered module ids.
          */
-        Instance.prototype.listModules = function () {
+        Application.prototype.listModules = function () {
             return Object.keys(this.modules);
         };
         /**
-         *  Hooks a given function to specific hook type.
-         *  The execution pipeline depends on the hook type return parameter -
-         *  If it is evaluated to true, pipeline continues, if not, pipeline stops.
-         *  Errors do not affect the execution pipeline.
-         *  @param {string} hookType The hook type.
-         *  @param {function} plugin The function needs to hook. It must return true in order to continue the pipeline.
+         *  Hooks a plugin to given hook name from dcore.hooks constants.
          */
-        Instance.prototype.hook = function (hookType, plugin) {
-            var errorMsg = "hook() failed:";
-            typeGuard("string", hookType, errorMsg + " hook type should be a string");
-            typeGuard("function", plugin, errorMsg + " plugin should be a function");
-            if (!Array.isArray(this.hooks[hookType])) {
-                this.hooks[hookType] = [];
+        Application.prototype.hook = function (hookName, plugin) {
+            this.pluginsPipeline.hook(hookName, plugin);
+        };
+        /**
+         *  Runs all plugins for given hook as pipeline.
+         *  It is useful when you want to provide hooks in your own plugin.
+         */
+        Application.prototype.pipe = function (hookName, hookInvoker, hookContext) {
+            var args = [];
+            for (var _i = 3; _i < arguments.length; _i++) {
+                args[_i - 3] = arguments[_i];
             }
-            this.hooks[hookType].push(plugin);
-            return this;
+            return this.pluginsPipeline.pipe.apply(this.pluginsPipeline, [hookName, hookInvoker, hookContext].concat(args));
         };
         /**
          *  Runs the core.
-         *  @param {Function} [action] Optional. A setup action executed before core run.
          */
-        Instance.prototype.run = function (action) {
+        Application.prototype.run = function (onRunCallback) {
             if (this.state.isRunning) {
                 return;
             }
-            this.beforeRunAction = action;
-            this._onDomReady = this._onDomReady.bind(this);
-            if (document.readyState === "complete" ||
-                document.readyState === "interactive" ||
-                document.readyState === "loaded" /* old safari browsers */) {
-                this._onDomReady(null);
+            this.onApplicationRun = onRunCallback;
+            if (isDocumentReady()) {
+                this.__onDomReady(null);
             }
             else {
-                document.addEventListener("DOMContentLoaded", this._onDomReady);
+                this.__onDomReady = this.__onDomReady.bind(this);
+                document.addEventListener("DOMContentLoaded", this.__onDomReady);
             }
-            return this;
         };
-        Instance.prototype._onDomReady = function (ev) {
-            document.removeEventListener("DOMContentLoaded", this._onDomReady);
+        Application.prototype.__onDomReady = function (ev) {
+            document.removeEventListener("DOMContentLoaded", this.__onDomReady);
             this.state.isRunning = true;
-            if (typeof this.beforeRunAction === "function") {
-                this.beforeRunAction();
+            if (typeof this.onApplicationRun === "function") {
+                try {
+                    this.onApplicationRun();
+                }
+                catch (err) {
+                    console.error("run(): onRunCallback failed");
+                    console.error(err);
+                }
             }
-            runPlugins.call(this, dcore.HOOK_DOM_READY);
+            delete this.onApplicationRun;
+            this.pluginsPipeline.pipe(hooks.CORE_RUN, function () { }, this);
         };
-        return Instance;
+        Application.prototype.__register = function (moduleId, moduleFactory) {
+            this.modules[moduleId] = {
+                create: moduleFactory,
+                instances: {}
+            };
+        };
+        Application.prototype.__startModule = function (moduleId, instanceId, moduleData, props) {
+            props = props || { instanceId: instanceId };
+            var sb = new this.Sandbox(this, moduleId, instanceId);
+            var instance = moduleData.create(sb);
+            moduleData.instances[instanceId] = instance;
+            this.pluginsPipeline.pipe(hooks.MODULE_INIT, function () {
+                instance.init(props);
+                instance = null;
+            }, instance, props, sb);
+        };
+        return Application;
     }());
-    dcore.Instance = Instance;
-    /**
-     *  Creates an application core instance.
-     * @param {function} [sandboxType] Optional. Custom sandbox type.
-     * @returns {Core}
-     */
-    function createOne(sandboxType, isDebug) {
-        if (isDebug === void 0) { isDebug = true; }
-        return new Instance(sandboxType, isDebug);
-    }
-    dcore.createOne = createOne;
+    dcore.Application = Application;
 })(dcore || (dcore = {}));
-//# sourceMappingURL=dcore.js.map

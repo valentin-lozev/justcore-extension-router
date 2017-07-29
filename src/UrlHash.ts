@@ -1,4 +1,4 @@
-﻿namespace dcore.plugins.routing {
+﻿namespace dcore.routing {
     "use strict";
 
     export interface QueryParam {
@@ -7,16 +7,14 @@
     }
 
     /**
-     *  @class UrlHash - Represents the string after "#" in a url.
-     *  @property {String} value - The string after # in a url.
-     *  @property {Array} tokens - The array of string tokens after splitint its value by / (slash).
-     *  @property {Array} queryParams - The array of key-value pairs parsed from the query string in its value.
+     *  Represents the string after "#" in a url.
      */
     export class UrlHash {
-        private questionMarkIndex: number = -1;
-        private url: string = "";
+
         public tokens: string[] = [];
         public queryParams: QueryParam[] = [];
+        private questionMarkIndex: number = -1;
+        private url: string = "";
 
         get value(): string {
             return this.url;
