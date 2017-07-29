@@ -198,12 +198,22 @@ namespace dcore {
 
     import plugin = routing;
 
+    export namespace hooks {
+        export const ROUTING_REGISTER = "routing.register";
+        export const ROUTING_START = "routing.start";
+    }
+
     export class Routing {
 
         defaultUrl: string = null;
+        private core: DCore;
         private routes: plugin.Route[] = [];
         private urlHash: plugin.UrlHash = new plugin.UrlHash();
         private currentRoute: plugin.Route;
+
+        constructor(core: DCore) {
+            this.core = core;
+        }
 
         /**
          *  Registers a route by given url pattern.
@@ -215,25 +225,22 @@ namespace dcore {
                 throw new Error("register(): Route " + pattern + " has been already registered.");
             }
 
-            this.routes.push(new plugin.Route(pattern, callback));
+            this.core.pipe(
+                hooks.ROUTING_REGISTER,
+                this.__register,
+                this,
+                pattern, callback);
         }
 
         /**
          *  Starts hash url if such is registered, if not, it starts the default one.
          */
         startRoute(hash: string): void {
-            this.urlHash.value = hash;
-            this.currentRoute = this.__findRoute();
-            if (this.currentRoute) {
-                this.currentRoute.start(this.urlHash);
-                return;
-            }
-
-            if (typeof this.defaultUrl === "string") {
-                this.__startDefaultRoute(hash);
-            } else {
-                console.warn("No route matches " + hash);
-            }
+            this.core.pipe(
+                hooks.ROUTING_START,
+                this.__startRoute,
+                this,
+                hash);
         }
 
         getCurrentRoute(): DRouteState {
@@ -255,6 +262,25 @@ namespace dcore {
          */
         anyRoutes(): boolean {
             return this.routes.length > 0;
+        }
+
+        private __register(pattern: string, callback: (routeParams: any, currentPattern?: string) => void): void {
+            this.routes.push(new plugin.Route(pattern, callback));
+        }
+
+        private __startRoute(hash: string): void {
+            this.urlHash.value = hash;
+            this.currentRoute = this.__findRoute();
+            if (this.currentRoute) {
+                this.currentRoute.start(this.urlHash);
+                return;
+            }
+
+            if (typeof this.defaultUrl === "string") {
+                this.__startDefaultRoute(hash);
+            } else {
+                console.warn("No route matches " + hash);
+            }
         }
 
         private __findRoute(): plugin.Route {
@@ -330,7 +356,7 @@ namespace dcore {
 
     Application.prototype.useRouting = function (this: DCore): DCore {
         if (!this.routing) {
-            this.routing = new Routing();
+            this.routing = new Routing(this);
 
             (function (sb: DSandbox) {
                 sb.getCurrentRoute = sandboxGetCurrentRoute;

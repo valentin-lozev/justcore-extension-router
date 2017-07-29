@@ -43,7 +43,7 @@ namespace dcore {
 
     Application.prototype.useRouting = function (this: DCore): DCore {
         if (!this.routing) {
-            this.routing = new Routing();
+            this.routing = new Routing(this);
 
             (function (sb: DSandbox) {
                 sb.getCurrentRoute = sandboxGetCurrentRoute;

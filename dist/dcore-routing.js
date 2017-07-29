@@ -174,11 +174,17 @@ var dcore;
 (function (dcore) {
     "use strict";
     var plugin = dcore.routing;
+    var hooks;
+    (function (hooks) {
+        hooks.ROUTING_REGISTER = "routing.register";
+        hooks.ROUTING_START = "routing.start";
+    })(hooks = dcore.hooks || (dcore.hooks = {}));
     var Routing = (function () {
-        function Routing() {
+        function Routing(core) {
             this.defaultUrl = null;
             this.routes = [];
             this.urlHash = new plugin.UrlHash();
+            this.core = core;
         }
         /**
          *  Registers a route by given url pattern.
@@ -189,24 +195,13 @@ var dcore;
             if (this.routes.some(function (r) { return r.pattern === pattern; })) {
                 throw new Error("register(): Route " + pattern + " has been already registered.");
             }
-            this.routes.push(new plugin.Route(pattern, callback));
+            this.core.pipe(hooks.ROUTING_REGISTER, this.__register, this, pattern, callback);
         };
         /**
          *  Starts hash url if such is registered, if not, it starts the default one.
          */
         Routing.prototype.startRoute = function (hash) {
-            this.urlHash.value = hash;
-            this.currentRoute = this.__findRoute();
-            if (this.currentRoute) {
-                this.currentRoute.start(this.urlHash);
-                return;
-            }
-            if (typeof this.defaultUrl === "string") {
-                this.__startDefaultRoute(hash);
-            }
-            else {
-                console.warn("No route matches " + hash);
-            }
+            this.core.pipe(hooks.ROUTING_START, this.__startRoute, this, hash);
         };
         Routing.prototype.getCurrentRoute = function () {
             return {
@@ -225,6 +220,23 @@ var dcore;
          */
         Routing.prototype.anyRoutes = function () {
             return this.routes.length > 0;
+        };
+        Routing.prototype.__register = function (pattern, callback) {
+            this.routes.push(new plugin.Route(pattern, callback));
+        };
+        Routing.prototype.__startRoute = function (hash) {
+            this.urlHash.value = hash;
+            this.currentRoute = this.__findRoute();
+            if (this.currentRoute) {
+                this.currentRoute.start(this.urlHash);
+                return;
+            }
+            if (typeof this.defaultUrl === "string") {
+                this.__startDefaultRoute(hash);
+            }
+            else {
+                console.warn("No route matches " + hash);
+            }
         };
         Routing.prototype.__findRoute = function () {
             for (var i = 0, len = this.routes.length; i < len; i++) {
@@ -271,7 +283,7 @@ var dcore;
     }
     dcore.Application.prototype.useRouting = function () {
         if (!this.routing) {
-            this.routing = new dcore.Routing();
+            this.routing = new dcore.Routing(this);
             (function (sb) {
                 sb.getCurrentRoute = sandboxGetCurrentRoute;
                 sb.go = sandboxGo;
