@@ -24,6 +24,6 @@
     "url": "http://github.com/valentin-lozev/dcore-routing.git"
   },
   "dependencies": {
-    "dcore": "~2.0.0"
+    "dcore": "^2.1.0"
   }
 }
