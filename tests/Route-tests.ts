@@ -7,7 +7,7 @@
 
     function getHash(value: string): dcore.routing.UrlHash {
         let result = new dcore.routing.UrlHash();
-        result.value = value;
+        result.url = value;
         return result;
     }
 
@@ -59,7 +59,7 @@
 
         expect(route.getTokens().length).toEqual(3);
         expect(hash.tokens.length).toEqual(2);
-        expect(route.equals(hash)).toBeFalsy();
+        expect(route.matches(hash)).toBeFalsy();
     });
 
     it("should not be equal to hash with different token name", () => {
@@ -68,7 +68,7 @@
 
         expect(route.getTokens()[0].name).toEqual("books");
         expect(hash.tokens[0]).toEqual("book");
-        expect(route.equals(hash)).toBeFalsy();
+        expect(route.matches(hash)).toBeFalsy();
     });
 
     it("should be equal to hash tokens when dynamic params are missing", () => {
@@ -77,7 +77,7 @@
 
         expect(route.getTokens().length).toEqual(3);
         expect(hash.tokens.length).toEqual(3);
-        expect(route.equals(hash)).toBeTruthy();
+        expect(route.matches(hash)).toBeTruthy();
     });
 
     it("should be equal to hash tokens when there are dynamic params", () => {
@@ -86,7 +86,7 @@
 
         expect(route.getTokens().length).toEqual(3);
         expect(hash.tokens.length).toEqual(3);
-        expect(route.equals(hash)).toBeTruthy();
+        expect(route.matches(hash)).toBeTruthy();
     });
 
     it("should be equal to hash tokens when there are dynamic params case insensitive", () => {
@@ -95,7 +95,7 @@
 
         expect(route.getTokens().length).toEqual(3);
         expect(hash.tokens.length).toEqual(3);
-        expect(route.equals(hash)).toBeTruthy();
+        expect(route.matches(hash)).toBeTruthy();
     });
 
     it("should execute callback with no dynamic params when pattern is without dynamic params and query params", () => {
@@ -150,7 +150,7 @@
         };
 
         route.start(getHash("/books?search=asd&filter=true"));
-        let params = route.queryParams;
+        let params = route.params;
 
         expect(params).toEqual(expected);
         expect(callback.run).toHaveBeenCalledWith(expected, pattern);

@@ -7,7 +7,7 @@
     it("should have empty string set as default value", () => {
         let hash = getOne();
 
-        expect(hash.value).toEqual("");
+        expect(hash.url).toEqual("");
     });
 
     it("should have an empty array of tokens when value is not set", () => {
@@ -27,18 +27,18 @@
     it("should set empty string when value is null", () => {
         let hash = getOne();
 
-        hash.value = null;
+        hash.url = null;
 
-        expect(hash.value).toEqual("");
+        expect(hash.url).toEqual("");
         expect(hash.tokens.length).toEqual(0);
     });
 
     it("should set empty string when value is undefined", () => {
         let hash = getOne();
 
-        hash.value = undefined;
+        hash.url = undefined;
 
-        expect(hash.value).toEqual("");
+        expect(hash.url).toEqual("");
         expect(hash.tokens.length).toEqual(0);
     });
 
@@ -46,9 +46,9 @@
         let hash = getOne();
         let url = "/books/edit/";
 
-        hash.value = url;
+        hash.url = url;
 
-        expect(hash.value).toEqual(url);
+        expect(hash.url).toEqual(url);
         expect(hash.tokens.length).toEqual(2);
         expect(hash.tokens[0]).toEqual("books");
         expect(hash.tokens[1]).toEqual("edit");
@@ -58,9 +58,9 @@
         let hash = getOne();
         let url = "/books/edit?page=1&id=-11&title=book";
 
-        hash.value = url;
+        hash.url = url;
 
-        expect(hash.value).toEqual(url);
+        expect(hash.url).toEqual(url);
         expect(hash.tokens.length).toEqual(2);
         expect(hash.tokens[0]).toEqual("books");
         expect(hash.tokens[1]).toEqual("edit");
@@ -74,9 +74,9 @@
         let hash = getOne();
         let url = "/books/?Page=1&id=-11&tiTle=Book";
 
-        hash.value = url;
+        hash.url = url;
 
-        expect(hash.value).toEqual(url);
+        expect(hash.url).toEqual(url);
         expect(hash.tokens.length).toEqual(1);
         expect(hash.tokens[0]).toEqual("books");
         expect(hash.queryParams.length).toEqual(3);
@@ -89,7 +89,7 @@
         let hash = getOne();
         let url = "/books?page=1&id";
 
-        hash.value = url;
+        hash.url = url;
 
         expect(hash.tokens.length).toEqual(1);
         expect(hash.tokens[0]).toEqual("books");
