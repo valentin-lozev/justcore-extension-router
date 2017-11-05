@@ -1,3 +1,3 @@
-# dcore-routing
+# dcore-extension-router
 
-Routing plugin for dcore.js
+Routing extension for DCore.js

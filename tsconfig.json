@@ -1,14 +1,19 @@
 {
-  "compilerOptions": {
-    "target": "es5",
-    "noImplicitAny": false,
-    "noEmitOnError": true,
-    "removeComments": false,
-    "sourceMap": false
-  },
-  "compileOnSave": true,
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+	"compilerOptions": {
+		"target": "es5",
+		"module": "es2015",
+		"noImplicitAny": false,
+		"noEmitOnError": true,
+		"removeComments": false,
+		"sourceMap": false,
+		"baseUrl": "",
+		"paths": {
+			"dcore": [ "bower_components/dcore/dist/dcore" ]
+		}
+	},
+	"compileOnSave": false,
+	"exclude": [
+		"node_modules",
+		"dist"
+	]
 }

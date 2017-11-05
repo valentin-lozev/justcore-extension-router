@@ -1,122 +1,130 @@
-﻿namespace dcore.routing {
-  "use strict";
+﻿import { Hash, SearchParam } from "./Hash";
 
-  interface RouteToken {
-    name: string;
-    isDynamic: boolean;
-  }
+export interface RouteToken {
+	name: string;
+	isDynamic: boolean;
+}
 
-  const routeParamRegex = /{([a-zA-Z]+)}/; // e.g {id}
+export interface RouteParamsList {
+	[key: string]: string;
+}
 
-  /**
-   *  Accepts a pattern and split it by / (slash).
-   *  It also supports dynamic params - {yourDynamicParam}.
-   */
-  export class Route {
+const routeParamRegex = /{([a-zA-Z]+)}/; // e.g {id}
 
-    public pattern: string;
-    public params: { [key: string]: string; };
-    private callback: (routeParams: { [key: string]: string; }, currentPattern?: string) => void;
-    private tokens: RouteToken[] = [];
+function createTokens(path: string): RouteToken[] {
+	return path
+		.split("/")
+		.reduce((prevResult, hashFragment) => {
+			if (hashFragment !== "") {
+				prevResult.push(createToken(hashFragment));
+			}
 
-    constructor(pattern: string, onStart: (routeParams: { [key: string]: string; }, currentPattern?: string) => void) {
-      const errorMsg = "Route registration failed:";
-      if (typeof pattern !== "string") {
-        throw new TypeError(`${errorMsg} pattern should be non empty string.`);
-      }
+			return prevResult;
+		}, []);
+}
 
-      if (typeof onStart !== "function") {
-        throw new TypeError(`${errorMsg} callback should be a function.`);
-      }
+function createToken(hashFragment: string): RouteToken {
+	const paramMatchGroups = routeParamRegex.exec(hashFragment);
+	const isDynamic = !!paramMatchGroups;
+	return {
+		name: isDynamic ? paramMatchGroups[1] : hashFragment,
+		isDynamic: isDynamic
+	};
+}
 
-      this.params = {};
-      this.pattern = pattern;
-      this.callback = onStart;
-      this.populateTokens();
-    }
+function parseSearch(hash: Hash): RouteParamsList {
+	return hash
+		.search
+		.reduce((prevResult, param: SearchParam) => {
+			prevResult[param.key] = param.value;
+			return prevResult;
+		}, Object.create(null));
+}
 
-    /**
-     *  The array of tokens after its pattern is splitted by / (slash).
-     */
-    getTokens(): RouteToken[] {
-      return this.tokens.slice(0);
-    }
+/**
+ *  Accepts a path and split it by / (slash).
+ *  It also supports dynamic params - {yourDynamicParam}.
+ */
+export class Route {
 
-    /**
-     *  Determines whether it matches an UrlHash.
-     */
-    matches(hashUrl: UrlHash): boolean {
-      if (this.tokens.length !== hashUrl.tokens.length) {
-        return false;
-      }
+	path: string;
+	params: RouteParamsList;
 
-      for (let i = 0, len = this.tokens.length; i < len; i++) {
-        const token = this.tokens[i];
-        const urlToken = hashUrl.tokens[i];
-        if (token.isDynamic) {
-          continue;
-        }
+	private callback: (match: router.RouteMatch) => void;
+	private _tokens: RouteToken[] = [];
 
-        if (token.name.toLowerCase() !== urlToken.toLowerCase()) {
-          return false;
-        }
-      }
+	constructor(path: string, callback: (match: router.RouteMatch) => void) {
+		if (typeof path !== "string" || path === "") {
+			throw new TypeError("route(): path should be non empty string.");
+		}
 
-      return true;
-    }
+		if (typeof callback !== "function") {
+			throw new TypeError("route(): callback should be a function.");
+		}
 
-    /**
-     *  Populate the dynamic params from the UrlHash if such exist
-     *  and executes the registered callback.
-     */
-    start(urlHash: UrlHash): void {
-      this.params = this.extractRotueParams(urlHash);
-      if (this.callback) {
-        try {
-          this.callback(this.params, this.pattern);
-        } catch (error) {
-          console.error(`Couldn't start ${urlHash.url} route due to:`);
-          console.error(error);
-        }
-      }
-    }
+		this.params = Object.create(null);
+		this.path = path;
+		this.callback = callback;
+		this._tokens = createTokens(this.path);
+	}
 
-    private populateTokens(): void {
-      this.tokens = [];
-      this.pattern
-        .split("/")
-        .forEach(urlFragment => {
-          if (urlFragment !== "") {
-            this.tokens.push(this.parseToken(urlFragment));
-          }
-        });
-    }
+	/**
+	 *  The array of tokens after its path is splitted by / (slash).
+	 */
+	get tokens(): RouteToken[] {
+		return this._tokens.slice(0);
+	}
 
-    private parseToken(urlFragment: string): RouteToken {
-      const paramMatchGroups = routeParamRegex.exec(urlFragment);
-      const isDynamic = !!paramMatchGroups;
-      return {
-        name: isDynamic ? paramMatchGroups[1] : urlFragment,
-        isDynamic: isDynamic
-      };
-    }
+	/**
+	 *  Determines whether it matches an UrlHash.
+	 */
+	matches(hash: Hash): boolean {
+		if (this._tokens.length !== hash.tokens.length) {
+			return false;
+		}
 
-    private extractRotueParams(url: UrlHash): { [key: string]: string; } {
-      // route params are with higher priority than query params
-      return this.tokens.reduce((prevResult, token, index) => {
-        if (token.isDynamic) {
-          prevResult[token.name] = url.tokens[index];
-        }
+		for (let i = 0, len = this._tokens.length; i < len; i++) {
+			const token = this._tokens[i];
+			const urlToken = hash.tokens[i];
+			if (token.isDynamic) {
+				continue;
+			}
 
-        return prevResult;
-      }, this.extractQueryParams(url));
-    }
+			if (token.name.toLowerCase() !== urlToken.toLowerCase()) {
+				return false;
+			}
+		}
 
-    private extractQueryParams(url: UrlHash): { [key: string]: string; } {
-      return url.queryParams.reduce((prevResult, param: QueryParam) => {
-        prevResult[param.key] = param.value;
-        return prevResult;
-      }, {});
-    }
-  }
+		return true;
+	}
+
+	/**
+	 *  Populate the dynamic params from the UrlHash if such exist
+	 *  and executes the registered callback.
+	 */
+	start(hash: Hash): void {
+		this.params = this.parseParams(hash);
+		if (this.callback) {
+			try {
+				this.callback({
+					path: this.path,
+					params: this.params
+				});
+			} catch (error) {
+				console.error(`start(): Couldn't start "${hash.value}" hash`);
+				console.error(error);
+			}
+		}
+	}
+
+	private parseParams(hash: Hash): { [key: string]: string; } {
+		// route params are with higher priority than search params
+		return this._tokens.reduce((prevResult, token, index) => {
+			if (token.isDynamic) {
+				prevResult[token.name] = hash.tokens[index];
+			}
+
+			return prevResult;
+		}, parseSearch(hash));
+	}
 }
