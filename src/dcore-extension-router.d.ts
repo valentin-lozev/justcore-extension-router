@@ -2,7 +2,7 @@
 
 	namespace dcore {
 		interface Core {
-			router?: Readonly<router.Router>;
+			router?: router.Router;
 		}
 
 		interface Sandbox {
