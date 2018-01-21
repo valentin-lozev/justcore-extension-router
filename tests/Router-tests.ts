@@ -2,7 +2,7 @@
 import { DCore } from "dcore";
 
 interface TestsContext {
-	createPipeline: jasmine.Spy;
+	createHook: jasmine.Spy;
 	router: Router;
 	noop: dcore.Func;
 }
@@ -12,22 +12,22 @@ describe("Router", () => {
 	beforeEach(function (this: TestsContext): void {
 		this.noop = function noop(): any { };
 		const dcore = new DCore();
-		this.createPipeline = spyOn(dcore, "createPipeline").and.callThrough();
+		this.createHook = spyOn(dcore, "createHook").and.callThrough();
 		this.router = new Router(dcore);
 	});
 
 	it("should create two pipelines", function (this: TestsContext): void {
-		expect(this.createPipeline).toHaveBeenCalledTimes(2);
+		expect(this.createHook).toHaveBeenCalledTimes(2);
 	});
 
 	it("should create onRouteAdd pipeline", function (this: TestsContext): void {
-		expect((this.router.route as dcore.FuncWithPipeline)._withPipeline).toEqual(true);
-		expect((this.router.route as dcore.FuncWithPipeline)._hook).toEqual("onRouteAdd");
+		expect((this.router.route as dcore.Hook)._withPipeline).toEqual(true);
+		expect((this.router.route as dcore.Hook)._hookType).toEqual("onRouteAdd");
 	});
 
 	it("should create onRouteStart pipeline", function (this: TestsContext): void {
-		expect((this.router.start as dcore.FuncWithPipeline)._withPipeline).toEqual(true);
-		expect((this.router.start as dcore.FuncWithPipeline)._hook).toEqual("onRouteStart");
+		expect((this.router.start as dcore.Hook)._withPipeline).toEqual(true);
+		expect((this.router.start as dcore.Hook)._hookType).toEqual("onRouteStart");
 	});
 
 	it("should has null as default url by default", function (this: TestsContext): void {
