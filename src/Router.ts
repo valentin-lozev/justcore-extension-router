@@ -14,8 +14,8 @@ export class Router implements router.Router {
 		this.hash = new Hash();
 		this.currentRoute = null;
 
-		this.route = dcore.createHook("onRouteAdd", this.route);
-		this.start = dcore.createHook("onRouteStart", this.start);
+		this.route = dcore.createHook("onRouteAdd", this.route, this);
+		this.start = dcore.createHook("onRouteStart", this.start, this);
 	}
 
 	get paths(): string[] {

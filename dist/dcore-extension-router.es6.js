@@ -174,8 +174,8 @@ var Router = /** @class */ (function () {
         this.routes = Object.create(null);
         this.hash = new Hash();
         this.currentRoute = null;
-        this.route = dcore.createHook("onRouteAdd", this.route);
-        this.start = dcore.createHook("onRouteStart", this.start);
+        this.route = dcore.createHook("onRouteAdd", this.route, this);
+        this.start = dcore.createHook("onRouteStart", this.start, this);
     }
     Object.defineProperty(Router.prototype, "paths", {
         get: function () {

@@ -16,8 +16,13 @@ describe("Router", () => {
 		this.router = new Router(dcore);
 	});
 
-	it("should create two pipelines", function (this: TestsContext): void {
+	it("should create two hooks", function (this: TestsContext): void {
 		expect(this.createHook).toHaveBeenCalledTimes(2);
+	});
+
+	it("should pass router as context to hooks", function (this: TestsContext): void {
+		expect(this.createHook.calls.argsFor(0)[2]).toBe(this.router);
+		expect(this.createHook.calls.argsFor(1)[2]).toBe(this.router);
 	});
 
 	it("should create onRouteAdd pipeline", function (this: TestsContext): void {
