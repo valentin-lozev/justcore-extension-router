@@ -1,17 +1,17 @@
 ﻿import { router } from "../src/index";
 import { Router } from "../src/Router";
-import { DCore } from "dcore";
+import { Core } from "justcore";
 
 interface TestsContext {
-	dcore: dcore.Core;
-	extension: dcore.Extension;
-	noop: dcore.Func;
+	core: jc.Core;
+	extension: jc.Extension;
+	noop: jc.Func;
 }
 
 describe("index", () => {
 
 	beforeEach(function (this: TestsContext): void {
-		this.dcore = new DCore();
+		this.core = new Core();
 		this.extension = router();
 		this.noop = function (): any { };
 	});
@@ -20,29 +20,29 @@ describe("index", () => {
 		expect(this.extension.name).toEqual("router");
 	});
 
-	describe("dcore", () => {
+	describe("core", () => {
 		it("should be extended with router func", function (this: TestsContext): void {
-			this.extension.install(this.dcore);
+			this.extension.install(this.core);
 
-			expect(this.dcore.router instanceof Router).toEqual(true);
+			expect(this.core.router instanceof Router).toEqual(true);
 		});
 	});
 
 	describe("sandbox", () => {
 		it("should be extended with matchedRoute func", function (this: TestsContext): void {
-			this.extension.install(this.dcore);
+			this.extension.install(this.core);
 
-			const sandbox = new this.dcore.Sandbox(this.dcore, "module", "instance");
+			const sandbox = new this.core.Sandbox(this.core, "module", "instance");
 
 			expect(typeof sandbox.matchedRoute).toEqual("function");
-			expect(sandbox.matchedRoute()).toEqual(this.dcore.router.current);
+			expect(sandbox.matchedRoute()).toEqual(this.core.router.current);
 		});
 	});
 
 	describe("onCoreInit", () => {
 
 		it("should be defined", function (this: TestsContext): void {
-			const plugins = this.extension.install(this.dcore);
+			const plugins = this.extension.install(this.core);
 
 			expect(typeof plugins.onCoreInit).toEqual("function");
 		});
@@ -50,20 +50,20 @@ describe("index", () => {
 		it("should call next", function (this: TestsContext): void {
 			const next = spyOn(this, "noop");
 
-			const plugins = this.extension.install(this.dcore);
-			plugins.onCoreInit.call(this.dcore, next);
+			const plugins = this.extension.install(this.core);
+			plugins.onCoreInit.call(this.core, next);
 
 			expect(next).toHaveBeenCalledTimes(1);
 		});
 
 		it("should start listening for hashchange", function (this: TestsContext): void {
 			window.location.hash = "/home";
-			const plugins = this.extension.install(this.dcore);
-			const router = this.dcore.router;
+			const plugins = this.extension.install(this.core);
+			const router = this.core.router;
 			const start = spyOn(router, "start");
 			const addEventListener = spyOn(window, "addEventListener");
 
-			plugins.onCoreInit.call(this.dcore, this.noop);
+			plugins.onCoreInit.call(this.core, this.noop);
 			start.calls.reset();
 
 			const args = addEventListener.calls.argsFor(0);
@@ -79,11 +79,11 @@ describe("index", () => {
 
 		it("should start current location hash", function (this: TestsContext): void {
 			window.location.hash = "/home";
-			const plugins = this.extension.install(this.dcore);
-			const router = this.dcore.router;
+			const plugins = this.extension.install(this.core);
+			const router = this.core.router;
 			const start = spyOn(router, "start");
 
-			plugins.onCoreInit.call(this.dcore, this.noop);
+			plugins.onCoreInit.call(this.core, this.noop);
 
 			expect(start).toHaveBeenCalledTimes(1);
 			expect(start).toHaveBeenCalledWith(window.location.hash);

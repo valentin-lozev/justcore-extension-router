@@ -50,10 +50,10 @@ export class Route {
 	path: string;
 	params: RouteParamsList;
 
-	private callback: (match: router.RouteMatch) => void;
+	private callback: (match: jc.RouteMatch) => void;
 	private _tokens: RouteToken[] = [];
 
-	constructor(path: string, callback: (match: router.RouteMatch) => void) {
+	constructor(path: string, callback: (match: jc.RouteMatch) => void) {
 		if (typeof path !== "string" || path === "") {
 			throw new TypeError("route(): path should be non empty string.");
 		}

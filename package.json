@@ -1,6 +1,11 @@
 {
-	"name": "dcore-extension-router",
 	"version": "1.0.0",
+	"name": "justcore-extension-router",
+	"main": "dist/justcore-extension-router.umd.js",
+	"umd:main": "dist/justcore-extension-router.umd.js",
+	"jsnext:main": "dist/justcore-extension-router.module.js",
+	"module": "dist/justcore-extension-router.module.js",
+	"typings": "dist/justcore-extension-router.d.ts",
 	"devDependencies": {
 		"@types/jasmine": "^2.5.53",
 		"eslint": "^4.14.0",
@@ -19,11 +24,12 @@
 		"typescript": "^2.6.2",
 		"typescript-eslint-parser": "^11.0.0"
 	},
+	"peerDependencies": {
+		"justcore": "~1.0.0"
+	},
 	"scripts": {
 		"build": "node build/build.js"
 	},
-	"author": "Valentin Lozev",
 	"license": "MIT",
-	"dependencies": {},
-	"description": "Routing extension for DCore.js"
+	"author": "Valentin Lozev"
 }

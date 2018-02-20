@@ -8,7 +8,7 @@
 		"sourceMap": false,
 		"baseUrl": "",
 		"paths": {
-			"dcore": [ "bower_components/dcore/dist/dcore" ]
+			"justcore": [ "bower_components/justcore/dist/justcore" ]
 		}
 	},
 	"compileOnSave": false,

@@ -1,8 +1,11 @@
 {
-	"name": "dcore-extension-router",
-	"description": "Routing extension for DCore.js",
+	"name": "justcore-extension-router",
+	"description": "Routing extension for justcore.js",
 	"private": false,
-	"main": "dist/dcore-extension-router.js",
+	"main": [
+		"dist/justcore-extension-router.umd.js",
+		"dist/justcore-extension-router.d.ts"
+	],
 	"moduleType": [
 		"amd",
 		"globals",
@@ -20,13 +23,13 @@
 		"**/tests",
 		"/*.*"
 	],
-	"keywords": [ "dcore", "extension", "routing", "router", "typescript" ],
+	"keywords": [ "justcore", "extension", "routing", "router", "typescript" ],
 	"authors": [ "Valentin Lozev <valentin.zh.lozev@gmail.com>" ],
 	"repository": {
 		"type": "git",
-		"url": "http://github.com/valentin-lozev/dcore-extension-router.git"
+		"url": "http://github.com/valentin-lozev/justcore-extension-router.git"
 	},
 	"dependencies": {
-		"dcore": "~3.0.0"
+		"justcore": "~1.0.0"
 	}
 }

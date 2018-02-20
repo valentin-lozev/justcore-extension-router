@@ -1,24 +1,24 @@
 ﻿import { Router } from "./Router";
 
-function matchedRoute(this: dcore.Sandbox): router.RouteMatch {
+function matchedRoute(this: jc.Sandbox): jc.RouteMatch {
 	return this._extensionsOnlyCore.router.current;
 }
 
-function onCoreInitPlugin(this: dcore.Core, next: dcore.Func<void>): void {
+function onCoreInitPlugin(this: jc.Core, next: jc.Func<void>): void {
 	next();
 
 	window.addEventListener("hashchange", () => this.router.start(window.location.hash));
 	this.router.start(window.location.hash);
 }
 
-export function router(): dcore.Extension {
+export function router(): jc.Extension {
 	return {
 		name: "router",
-		install: (dcore: dcore.Core) => {
-			(function (dcore: dcore.Core, sandbox: dcore.Sandbox) {
-				dcore.router = new Router(dcore);
+		install: (core: jc.Core) => {
+			(function (core: jc.Core, sandbox: jc.Sandbox) {
+				core.router = new Router(core);
 				sandbox.matchedRoute = matchedRoute;
-			}(dcore, dcore.Sandbox.prototype));
+			}(core, core.Sandbox.prototype));
 
 			return {
 				onCoreInit: onCoreInitPlugin

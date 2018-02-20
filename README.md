@@ -1,3 +1,3 @@
-# dcore-extension-router
+# justcore-extension-router
 
-Routing extension for DCore.js
+Routing extension for justcore.js

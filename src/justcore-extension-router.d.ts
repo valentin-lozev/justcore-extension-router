@@ -1,21 +1,19 @@
 ﻿declare global {
 
-	namespace dcore {
+	namespace jc {
 		interface Core {
-			router?: router.Router;
+			router?: Router;
 		}
 
 		interface Sandbox {
-			matchedRoute?(): router.RouteMatch;
+			matchedRoute?(): RouteMatch;
 		}
 
 		interface PluginsMap {
-			onRouteAdd?(next: () => void, path: string, onStart: (match: router.RouteMatch) => void): void;
+			onRouteAdd?(next: () => void, path: string, onStart: (match: RouteMatch) => void): void;
 			onRouteStart?(next: () => void, hash: string): void;
 		}
-	}
 
-	namespace router {
 		interface RouteMatch {
 			path: string;
 			params: { [key: string]: string; };
@@ -52,4 +50,4 @@
 	}
 }
 
-export function router(): dcore.Extension;
+export function router(): jc.Extension;

@@ -8,7 +8,7 @@ const uglify = require("rollup-plugin-uglify");
 const path = require("path");
 const karma = require("karma");
 
-const name = "dcore-extension-router";
+const name = "justcore-extension-router";
 const input = "src/index.ts";
 const distFolder = "dist";
 const tsOptions = { clean: true };
@@ -94,7 +94,7 @@ function bundleES() {
 				.write({
 					name: name,
 					format: "es",
-					file: `${distFolder}/${name}.es6.js`
+					file: `${distFolder}/${name}.module.js`
 				})
 				.then(() => console.info("ES6 bundled"));
 		});
@@ -107,7 +107,7 @@ function bundleTests() {
 			plugins: [
 				multiEntry(),
 				alias({
-					dcore: "bower_components/dcore/dist/dcore.es6.js"
+					justcore: "bower_components/justcore/dist/justcore.module.js"
 				}),
 				typescript(tsOptions)
 			]

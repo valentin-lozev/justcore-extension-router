@@ -169,13 +169,13 @@ var Route = /** @class */ (function () {
 }());
 
 var Router = /** @class */ (function () {
-    function Router(dcore) {
+    function Router(core) {
         this.defaultHash = null;
         this.routes = Object.create(null);
         this.hash = new Hash();
         this.currentRoute = null;
-        this.route = dcore.createHook("onRouteAdd", this.route, this);
-        this.start = dcore.createHook("onRouteStart", this.start, this);
+        this.route = core.createHook("onRouteAdd", this.route, this);
+        this.start = core.createHook("onRouteStart", this.start, this);
     }
     Object.defineProperty(Router.prototype, "paths", {
         get: function () {
@@ -252,11 +252,11 @@ function onCoreInitPlugin(next) {
 function router() {
     return {
         name: "router",
-        install: function (dcore) {
-            (function (dcore, sandbox) {
-                dcore.router = new Router(dcore);
+        install: function (core) {
+            (function (core, sandbox) {
+                core.router = new Router(core);
                 sandbox.matchedRoute = matchedRoute;
-            }(dcore, dcore.Sandbox.prototype));
+            }(core, core.Sandbox.prototype));
             return {
                 onCoreInit: onCoreInitPlugin
             };

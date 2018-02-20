@@ -1,28 +1,28 @@
 ﻿import { Hash } from "./Hash";
 import { Route, RouteParamsList } from "./Route";
 
-export class Router implements router.Router {
+export class Router implements jc.Router {
 
 	defaultHash: string;
 	private routes: { [path: string]: Route; };
 	private hash: Hash;
 	private currentRoute: Route;
 
-	constructor(dcore: dcore.Core) {
+	constructor(core: jc.Core) {
 		this.defaultHash = null;
 		this.routes = Object.create(null);
 		this.hash = new Hash();
 		this.currentRoute = null;
 
-		this.route = dcore.createHook("onRouteAdd", this.route, this);
-		this.start = dcore.createHook("onRouteStart", this.start, this);
+		this.route = core.createHook("onRouteAdd", this.route, this);
+		this.start = core.createHook("onRouteStart", this.start, this);
 	}
 
 	get paths(): string[] {
 		return Object.keys(this.routes);
 	}
 
-	get current(): router.RouteMatch {
+	get current(): jc.RouteMatch {
 		const current = this.currentRoute;
 		return {
 			path: current ? current.path : null,
@@ -30,7 +30,7 @@ export class Router implements router.Router {
 		};
 	}
 
-	route(path: string, onStart: (match: router.RouteMatch) => void): void {
+	route(path: string, onStart: (match: jc.RouteMatch) => void): void {
 		if (path in this.routes) {
 			throw new Error(`route(): ${path} has already been added`);
 		}
